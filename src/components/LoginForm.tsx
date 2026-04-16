@@ -1,12 +1,30 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction } from "@/app/actions/auth";
-
-type LoginState = { error?: string };
+import { useState } from "react";
+import { loginWithPassword } from "@/app/actions/auth";
 
 export function LoginForm() {
-  const [state, formAction, pending] = useActionState(loginAction, {} as LoginState);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const result = await loginWithPassword(formData);
+      if (result.ok) {
+        window.location.assign("/manage");
+        return;
+      }
+      setError(result.error);
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-12">
@@ -15,7 +33,10 @@ export function LoginForm() {
         Enter the shared admin password to manage application cards. The public directory stays at the home
         page.
       </p>
-      <form action={formAction} className="space-y-4 rounded-[10px] bg-white p-5 shadow-[0_4px_14px_rgba(0,0,0,0.08)] ring-1 ring-black/5">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-[10px] bg-white p-5 shadow-[0_4px_14px_rgba(0,0,0,0.08)] ring-1 ring-black/5"
+      >
         <div>
           <label htmlFor="password" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
             Password
@@ -29,7 +50,7 @@ export function LoginForm() {
             className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
           />
         </div>
-        {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button
           type="submit"
           disabled={pending}

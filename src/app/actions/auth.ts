@@ -4,15 +4,30 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SESSION_COOKIE, createSessionToken } from "@/lib/session";
 
-type LoginState = { error?: string };
+export type LoginResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
-export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
-  const password = String(formData.get("password") ?? "");
-  const expected = process.env.ADMIN_PASSWORD;
+/**
+ * Sets session cookie and returns success — no `redirect()` here so this can be called from
+ * client `useActionState` / `fetch` without triggering the known Next.js "Application error"
+ * when redirect throws inside a server action used with those patterns.
+ */
+export async function loginWithPassword(formData: FormData): Promise<LoginResult> {
+  const password = String(formData.get("password") ?? "").trim();
+  const expected = process.env.ADMIN_PASSWORD?.trim();
   if (!expected || password !== expected) {
-    return { error: "Invalid password" };
+    return { ok: false, error: "Invalid password" };
   }
-  const token = await createSessionToken();
+  let token: string;
+  try {
+    token = await createSessionToken();
+  } catch {
+    return {
+      ok: false,
+      error: "Server configuration error (check SESSION_SECRET is set and at least 32 characters).",
+    };
+  }
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -21,7 +36,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
-  redirect("/manage");
+  return { ok: true };
 }
 
 export async function logoutAction() {
