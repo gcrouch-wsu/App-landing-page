@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { SiteTheme } from "@/components/SiteTheme";
+import { getSiteSettings } from "@/lib/settings";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -8,19 +10,27 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 });
 
-export const metadata: Metadata = {
-  title: "Graduate School Tools",
-  description: "Directory of internal tools",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await getSiteSettings();
+  return {
+    title: s.headerTitle,
+    description: s.headerSubtitle,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getSiteSettings();
+
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>{children}</body>
+      <body className={`${montserrat.variable} antialiased`}>
+        <SiteTheme settings={settings} />
+        {children}
+      </body>
     </html>
   );
 }

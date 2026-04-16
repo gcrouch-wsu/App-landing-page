@@ -1,9 +1,14 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import type { SiteSettingsRow } from "@/lib/schema";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 import { logoutAction } from "@/app/actions/auth";
 
-export async function SiteHeader() {
+type Props = {
+  settings: SiteSettingsRow;
+};
+
+export async function SiteHeader({ settings }: Props) {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   const signedIn = token ? await verifySessionToken(token) : false;
@@ -17,24 +22,18 @@ export async function SiteHeader() {
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--wsu-gray-light)] bg-white px-5 py-4">
         <Link href="/" className="flex items-center gap-3 no-underline">
           <div className="grid h-11 w-11 place-items-center rounded-lg bg-[var(--wsu-crimson)] text-center text-[0.65rem] font-bold leading-tight tracking-wide text-white">
-            WSU
+            {settings.brandLine1}
             <br />
-            Grad
+            {settings.brandLine2}
           </div>
           <div>
-            <h1 className="m-0 text-lg font-bold text-[var(--wsu-gray)]">Graduate School Tools</h1>
+            <h1 className="m-0 text-lg font-bold text-[var(--wsu-gray)]">{settings.headerTitle}</h1>
             <p className="m-0 mt-0.5 text-xs font-medium text-[var(--wsu-gray-mid)]">
-              Internal directory
+              {settings.headerSubtitle}
             </p>
           </div>
         </Link>
         <nav className="flex items-center gap-3">
-          <Link
-            href="/manage"
-            className="rounded-full px-3 py-1.5 text-sm font-semibold text-[var(--wsu-gray-mid)] hover:bg-[var(--wsu-gray-light)] hover:text-[var(--wsu-gray)]"
-          >
-            Manage
-          </Link>
           {signedIn ? (
             <form action={logoutAction}>
               <button

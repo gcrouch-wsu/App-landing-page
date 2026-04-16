@@ -11,7 +11,7 @@ Remote: [gcrouch-wsu/App-landing-page](https://github.com/gcrouch-wsu/App-landin
 | Item | Role |
 |------|------|
 | Next.js (App Router) | UI, server actions, middleware |
-| Neon / Vercel Postgres | `DATABASE_URL`, table `app_card` |
+| Neon / Vercel Postgres | `DATABASE_URL`, tables `app_card` and `site_settings` |
 | Signed cookie session | `SESSION_SECRET` + `ADMIN_PASSWORD` for `/login` → `/manage` |
 
 The previous single-file `index.html` prototype lives in `legacy/index.html` for reference.
@@ -30,11 +30,7 @@ Your **public URL** is the Vercel production hostname (or custom domain), e.g. `
 
 1. Copy `.env.example` to `.env.local` and set `DATABASE_URL`, `ADMIN_PASSWORD`, and `SESSION_SECRET` (at least 32 characters).
 
-2. Create the table (once). Either run `drizzle/0000_init.sql` in the Neon SQL editor, or from the project root:
-
-   ```bash
-   npm run db:push
-   ```
+2. Create the tables (once). In the Neon SQL editor, run `drizzle/0000_init.sql` then `drizzle/0001_site_settings.sql` (or use `npm run db:push` from the project root against the same database).
 
 3. Start the app:
 
@@ -50,7 +46,7 @@ Your **public URL** is the Vercel production hostname (or custom domain), e.g. `
 1. Import the GitHub repo in Vercel (framework **Next.js** is auto-detected).
 2. Add a Neon (or Vercel Postgres) database and set **`DATABASE_URL`** in the project environment.
 3. Set **`ADMIN_PASSWORD`** (long random string) and **`SESSION_SECRET`** (≥ 32 random characters).
-4. Run the SQL in `drizzle/0000_init.sql` once against that database (or run `npm run db:push` locally pointed at the same `DATABASE_URL`).
+4. Run the SQL files `drizzle/0000_init.sql` and `drizzle/0001_site_settings.sql` once against that database (or `npm run db:push` locally with the same `DATABASE_URL`).
 5. Deploy. The public directory is `/`; editors use `/login` then `/manage`.
 
 Optional: **Deployment Protection** on Vercel if you want the whole site gated; otherwise only `/manage` is login-protected.

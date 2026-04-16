@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
+import { getSiteSettings } from "@/lib/settings";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const settings = await getSiteSettings();
+
   return (
     <>
       <div
@@ -10,10 +13,10 @@ export default function LoginPage() {
       />
       <header className="border-b border-[var(--wsu-gray-light)] bg-white px-5 py-4">
         <Link href="/" className="text-sm font-semibold text-[var(--wsu-crimson)] hover:underline">
-          ← Back to directory
+          {settings.loginBackLabel}
         </Link>
       </header>
-      <LoginForm />
+      <LoginForm title={settings.loginTitle} lede={settings.loginLede} />
     </>
   );
 }

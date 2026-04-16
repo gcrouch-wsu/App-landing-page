@@ -25,7 +25,8 @@ import {
   reorderAppsAction,
 } from "@/app/actions/apps";
 import { AppTile } from "@/components/AppTile";
-import type { AppCard } from "@/lib/schema";
+import { SiteAppearanceForm } from "@/components/SiteAppearanceForm";
+import type { AppCard, SiteSettingsRow } from "@/lib/schema";
 
 function SortableRow({
   app,
@@ -72,7 +73,13 @@ function SortableRow({
   );
 }
 
-export function ManageBoard({ initialApps }: { initialApps: AppCard[] }) {
+export function ManageBoard({
+  initialApps,
+  settings,
+}: {
+  initialApps: AppCard[];
+  settings: SiteSettingsRow;
+}) {
   const router = useRouter();
   const [items, setItems] = useState(initialApps);
   const [formError, setFormError] = useState<string | null>(null);
@@ -148,11 +155,10 @@ export function ManageBoard({ initialApps }: { initialApps: AppCard[] }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">Add application</h2>
-      <p className="mb-4 text-sm text-[var(--wsu-gray-mid)]">
-        Titles and URLs appear on the public page. Descriptions are optional. Drag cards in the frame
-        below to set order, then changes save automatically.
-      </p>
+      <SiteAppearanceForm key={settings.updatedAt?.valueOf() ?? "defaults"} settings={settings} />
+
+      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageAddTitle}</h2>
+      <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">{settings.manageAddBlurb}</p>
 
       <form id="add-app-form" action={handleAdd} className="mb-8 space-y-3 rounded-[10px] bg-white p-4 shadow-[0_4px_14px_rgba(0,0,0,0.08)] ring-1 ring-black/5">
         <div>
@@ -212,14 +218,12 @@ export function ManageBoard({ initialApps }: { initialApps: AppCard[] }) {
         </button>
       </form>
 
-      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">Card order</h2>
-      <p className="mb-3 text-sm text-[var(--wsu-gray-mid)]">
-        Drag by the handle. Order matches the public landing page.
-      </p>
+      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageOrderTitle}</h2>
+      <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">{settings.manageOrderBlurb}</p>
 
       <div className="min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
         {items.length === 0 ? (
-          <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">No cards yet. Add one above.</p>
+          <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">{settings.manageEmptyDragText}</p>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
