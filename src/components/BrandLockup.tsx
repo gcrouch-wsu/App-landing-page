@@ -21,20 +21,27 @@ function BrandMark({
 }: Omit<BrandLockupProps, "className" | "headerSubtitle" | "href">) {
   if (logoUrl) {
     return (
-      <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded-2xl border border-[var(--wsu-gray-light)] bg-white p-3 shadow-sm">
+      <div className="flex max-h-16 max-w-[11rem] min-w-0 items-center">
         <img
           src={logoUrl}
           alt={logoAlt || `${headerTitle} logo`}
-          className="max-h-full max-w-full object-contain"
+          className="block max-h-16 w-auto max-w-[11rem] object-contain"
         />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-16 min-w-[4.5rem] flex-col items-center justify-center rounded-2xl bg-[var(--wsu-crimson)] px-3 py-2 text-center text-[0.68rem] font-bold uppercase tracking-[0.22em] text-white shadow-sm">
-      <span>{brandLine1}</span>
-      <span>{brandLine2}</span>
+    <div className="flex min-w-0 items-stretch gap-3">
+      <span className="w-1 shrink-0 rounded-full bg-[var(--wsu-crimson)]/85" aria-hidden />
+      <div className="min-w-0 py-0.5">
+        <p className="text-[0.62rem] font-bold uppercase leading-none tracking-[0.28em] text-[var(--wsu-crimson)]">
+          {brandLine1}
+        </p>
+        <p className="mt-2 text-[0.62rem] font-bold uppercase leading-none tracking-[0.28em] text-[var(--wsu-gray-mid)]">
+          {brandLine2}
+        </p>
+      </div>
     </div>
   );
 }

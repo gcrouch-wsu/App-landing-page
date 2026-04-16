@@ -5,7 +5,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
 import { siteSettings } from "@/lib/schema";
-import { DEFAULT_SITE_SETTINGS } from "@/lib/site-defaults";
+import {
+  DEFAULT_SITE_SETTINGS,
+  siteSettingsSupportLogoColumns,
+} from "@/lib/settings";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
 const shadowValues = ["none", "sm", "md", "lg"] as const;
@@ -26,15 +29,26 @@ const logoUrlOrBlank = z
     "Use a full https:// URL or a root-relative /path",
   );
 
-const radiusOrBlank = z.preprocess((value) => {
-  const text = String(value ?? "").trim();
-  return text === "" ? undefined : Number(text);
-}, z.number().int().min(4, "Use a value between 4 and 32").max(32, "Use a value between 4 and 32").optional());
+const radiusOrBlank = z.preprocess(
+  (value) => {
+    const text = String(value ?? "").trim();
+    return text === "" ? undefined : Number(text);
+  },
+  z
+    .number()
+    .int()
+    .min(4, "Use a value between 4 and 32")
+    .max(32, "Use a value between 4 and 32")
+    .optional(),
+);
 
-const shadowOrBlank = z.preprocess((value) => {
-  const text = String(value ?? "").trim();
-  return text === "" ? undefined : text;
-}, z.enum(shadowValues).optional());
+const shadowOrBlank = z.preprocess(
+  (value) => {
+    const text = String(value ?? "").trim();
+    return text === "" ? undefined : text;
+  },
+  z.enum(shadowValues).optional(),
+);
 
 const settingsSchema = z.object({
   logoUrl: logoUrlOrBlank,
@@ -126,11 +140,10 @@ export async function updateSiteSettingsAction(formData: FormData) {
   const v = parsed.data;
   const headerTitle = fallbackText(v.headerTitle, DEFAULT_SITE_SETTINGS.headerTitle);
   const logoUrl = v.logoUrl || null;
+  const supportsLogoColumns = await siteSettingsSupportLogoColumns();
 
-  const nextSettings = {
+  const baseSettings = {
     id: 1,
-    logoUrl,
-    logoAlt: logoUrl ? fallbackText(v.logoAlt, `${headerTitle} logo`) : null,
     brandLine1: fallbackText(v.brandLine1, DEFAULT_SITE_SETTINGS.brandLine1),
     brandLine2: fallbackText(v.brandLine2, DEFAULT_SITE_SETTINGS.brandLine2),
     headerTitle,
@@ -163,14 +176,35 @@ export async function updateSiteSettingsAction(formData: FormData) {
     updatedAt: new Date(),
   };
 
-  const db = getDb();
-  await db
-    .insert(siteSettings)
-    .values(nextSettings)
-    .onConflictDoUpdate({
-      target: siteSettings.id,
-      set: nextSettings,
-    });
+  const nextSettings = supportsLogoColumns
+    ? {
+        ...baseSettings,
+        logoUrl,
+        logoAlt: logoUrl ? fallbackText(v.logoAlt, `${headerTitle} logo`) : null,
+      }
+    : baseSettings;
+
+  try {
+    const db = getDb();
+    await db
+      .insert(siteSettings)
+      .values(nextSettings)
+      .onConflictDoUpdate({
+        target: siteSettings.id,
+        set: nextSettings,
+      });
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: {
+        formErrors: [
+          error instanceof Error
+            ? error.message
+            : "Could not save settings right now.",
+        ],
+      },
+    };
+  }
 
   revalidatePath("/", "layout");
   revalidatePath("/");

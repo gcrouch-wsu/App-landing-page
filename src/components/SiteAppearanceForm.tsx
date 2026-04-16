@@ -68,7 +68,7 @@ export function SiteAppearanceForm({ settings }: Props) {
         </div>
         <div className="max-w-sm rounded-[18px] bg-[var(--wsu-bg)] px-4 py-3 text-sm leading-6 text-[var(--wsu-gray-mid)] ring-1 ring-black/5">
           Leave a field blank to fall back to the built-in default copy or colors. Add a logo URL
-          to replace the badge in the upper-left header.
+          to replace the text mark in the upper-left header.
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export function SiteAppearanceForm({ settings }: Props) {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-                Fallback badge line 1
+                Text mark line 1
                 <input
                   name="brandLine1"
                   defaultValue={settings.brandLine1}
@@ -113,7 +113,7 @@ export function SiteAppearanceForm({ settings }: Props) {
                 />
               </label>
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-                Fallback badge line 2
+                Text mark line 2
                 <input
                   name="brandLine2"
                   defaultValue={settings.brandLine2}
@@ -159,8 +159,8 @@ export function SiteAppearanceForm({ settings }: Props) {
               />
             </div>
             <p className="mt-4 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-              Wide or tall logos are scaled to fit this slot without stretching. If you leave the
-              logo URL blank, the fallback badge is used instead.
+              Wide or tall logos scale naturally without a surrounding box. If you leave the logo
+              URL blank, the header uses the text mark instead.
             </p>
           </aside>
         </div>

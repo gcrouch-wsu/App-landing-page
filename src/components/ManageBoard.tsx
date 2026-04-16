@@ -28,6 +28,26 @@ import { AppTile } from "@/components/AppTile";
 import { SiteAppearanceForm } from "@/components/SiteAppearanceForm";
 import type { AppCard, SiteSettingsRow } from "@/lib/schema";
 
+type AdminTab = "appearance" | "add" | "order";
+
+const adminTabs: { id: AdminTab; label: string; description: string }[] = [
+  {
+    id: "appearance",
+    label: "Page and appearance",
+    description: "Branding, copy, colors, and login content",
+  },
+  {
+    id: "add",
+    label: "Add application",
+    description: "Create a new card for the public directory",
+  },
+  {
+    id: "order",
+    label: "Card order",
+    description: "Reorder cards and remove old entries",
+  },
+];
+
 function SortableRow({
   app,
   onRemove,
@@ -73,6 +93,39 @@ function SortableRow({
   );
 }
 
+function TabButton({
+  active,
+  description,
+  id,
+  label,
+  onSelect,
+}: {
+  active: boolean;
+  description: string;
+  id: AdminTab;
+  label: string;
+  onSelect: (tab: AdminTab) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      id={`admin-tab-${id}`}
+      aria-controls={`admin-panel-${id}`}
+      aria-selected={active}
+      onClick={() => onSelect(id)}
+      className={`rounded-[16px] px-4 py-3 text-left transition ${
+        active
+          ? "bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)] ring-1 ring-black/5"
+          : "bg-transparent hover:bg-white/70"
+      }`}
+    >
+      <div className="text-sm font-semibold text-[var(--wsu-gray)]">{label}</div>
+      <p className="mt-1 text-xs leading-5 text-[var(--wsu-gray-mid)]">{description}</p>
+    </button>
+  );
+}
+
 export function ManageBoard({
   initialApps,
   settings,
@@ -81,6 +134,7 @@ export function ManageBoard({
   settings: SiteSettingsRow;
 }) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<AdminTab>("appearance");
   const [items, setItems] = useState(initialApps);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[] | undefined>>({});
@@ -154,114 +208,168 @@ export function ManageBoard({
   }, [dataSignature, initialApps]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <SiteAppearanceForm key={settings.updatedAt?.valueOf() ?? "defaults"} settings={settings} />
-
-      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageAddTitle}</h2>
-      <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
-        {settings.manageAddBlurb}
-      </p>
-
-      <form
-        id="add-app-form"
-        action={handleAdd}
-        className="mb-8 space-y-3 rounded-[10px] bg-white p-4 shadow-[0_4px_14px_rgba(0,0,0,0.08)] ring-1 ring-black/5"
-      >
-        <div>
-          <label
-            htmlFor="title"
-            className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
-          >
-            Title
-          </label>
-          <input
-            id="title"
-            name="title"
-            required
-            className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
-            placeholder="e.g. Degree audit"
-          />
-          {fieldErrors.title?.length ? (
-            <p className="mt-1 text-xs text-red-600">{fieldErrors.title[0]}</p>
-          ) : null}
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mb-8 rounded-[20px] bg-[var(--wsu-bg)]/90 p-2 ring-1 ring-black/5">
+        <div role="tablist" aria-label="Admin sections" className="grid gap-2 sm:grid-cols-3">
+          {adminTabs.map((tab) => (
+            <TabButton
+              key={tab.id}
+              id={tab.id}
+              label={tab.label}
+              description={tab.description}
+              active={activeTab === tab.id}
+              onSelect={setActiveTab}
+            />
+          ))}
         </div>
-        <div>
-          <label
-            htmlFor="url"
-            className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
-          >
-            URL
-          </label>
-          <input
-            id="url"
-            name="url"
-            required
-            className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
-            placeholder="https://example.wsu.edu"
-          />
-          {fieldErrors.url?.length ? (
-            <p className="mt-1 text-xs text-red-600">{fieldErrors.url[0]}</p>
-          ) : null}
-        </div>
-        <div>
-          <label
-            htmlFor="description"
-            className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
-          >
-            Description{" "}
-            <span className="font-normal normal-case text-[var(--wsu-gray-mid)]">(optional)</span>
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={3}
-            className="w-full resize-y rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
-            placeholder="Short blurb shown on the card"
-          />
-          {fieldErrors.description?.length ? (
-            <p className="mt-1 text-xs text-red-600">{fieldErrors.description[0]}</p>
-          ) : null}
-        </div>
-        {formError && !fieldErrors.title && !fieldErrors.url ? (
-          <p className="text-sm text-red-600">{formError}</p>
-        ) : null}
-        <button
-          type="submit"
-          disabled={formPending}
-          className="rounded-full bg-[var(--wsu-crimson)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--wsu-crimson-dark)] disabled:opacity-60"
-        >
-          {formPending ? "Saving..." : "Add card"}
-        </button>
-      </form>
-
-      <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageOrderTitle}</h2>
-      <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
-        {settings.manageOrderBlurb}
-      </p>
-
-      <div className="min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
-        {items.length === 0 ? (
-          <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
-            {settings.manageEmptyDragText}
-          </p>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <ul className="m-0 flex list-none flex-col gap-3 p-0">
-                {items.map((app) => (
-                  <li key={app.id}>
-                    <SortableRow
-                      app={app}
-                      onRemove={handleRemove}
-                      removing={removingId === app.id && listPending}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
       </div>
+
+      <section
+        role="tabpanel"
+        id="admin-panel-appearance"
+        aria-labelledby="admin-tab-appearance"
+        hidden={activeTab !== "appearance"}
+        className={activeTab === "appearance" ? "block" : "hidden"}
+      >
+        <SiteAppearanceForm key={settings.updatedAt?.valueOf() ?? "defaults"} settings={settings} />
+      </section>
+
+      <section
+        role="tabpanel"
+        id="admin-panel-add"
+        aria-labelledby="admin-tab-add"
+        hidden={activeTab !== "add"}
+        className={activeTab === "add" ? "block" : "hidden"}
+      >
+        <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
+          <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageAddTitle}</h2>
+          <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
+            {settings.manageAddBlurb}
+          </p>
+
+          <form id="add-app-form" action={handleAdd} className="space-y-3">
+            <div>
+              <label
+                htmlFor="title"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+              >
+                Title
+              </label>
+              <input
+                id="title"
+                name="title"
+                required
+                className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                placeholder="e.g. Degree audit"
+              />
+              {fieldErrors.title?.length ? (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.title[0]}</p>
+              ) : null}
+            </div>
+            <div>
+              <label
+                htmlFor="url"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+              >
+                URL
+              </label>
+              <input
+                id="url"
+                name="url"
+                required
+                className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                placeholder="https://example.wsu.edu"
+              />
+              {fieldErrors.url?.length ? (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.url[0]}</p>
+              ) : null}
+            </div>
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+              >
+                Description{" "}
+                <span className="font-normal normal-case text-[var(--wsu-gray-mid)]">
+                  (optional)
+                </span>
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={3}
+                className="w-full resize-y rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                placeholder="Short blurb shown on the card"
+              />
+              {fieldErrors.description?.length ? (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.description[0]}</p>
+              ) : null}
+            </div>
+            {formError && !fieldErrors.title && !fieldErrors.url ? (
+              <p className="text-sm text-red-600">{formError}</p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={formPending}
+              className="rounded-full bg-[var(--wsu-crimson)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--wsu-crimson-dark)] disabled:opacity-60"
+            >
+              {formPending ? "Saving..." : "Add card"}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section
+        role="tabpanel"
+        id="admin-panel-order"
+        aria-labelledby="admin-tab-order"
+        hidden={activeTab !== "order"}
+        className={activeTab === "order" ? "block" : "hidden"}
+      >
+        <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">
+                {settings.manageOrderTitle}
+              </h2>
+              <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
+                {settings.manageOrderBlurb}
+              </p>
+            </div>
+            <div className="rounded-full bg-[var(--wsu-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+              {items.length} card{items.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <div className="min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
+            {items.length === 0 ? (
+              <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
+                {settings.manageEmptyDragText}
+              </p>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                  <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                    {items.map((app) => (
+                      <li key={app.id}>
+                        <SortableRow
+                          app={app}
+                          onRemove={handleRemove}
+                          removing={removingId === app.id && listPending}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
