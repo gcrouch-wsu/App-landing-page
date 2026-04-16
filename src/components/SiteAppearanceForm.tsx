@@ -10,6 +10,7 @@ import { DEFAULT_SITE_SETTINGS } from "@/lib/site-defaults";
 type Props = {
   settings: SiteSettingsRow;
   supportsLogoStorage: boolean;
+  supportsHeaderTitleSize: boolean;
 };
 
 function blankIfDefault(value: string | number | null | undefined, fallback: string | number): string {
@@ -17,15 +18,24 @@ function blankIfDefault(value: string | number | null | undefined, fallback: str
   return String(value) === String(fallback) ? "" : String(value);
 }
 
-function previewText(value: string, fallback: string): string {
-  const trimmed = value.trim();
-  return trimmed || fallback;
+function previewValue(
+  value: string,
+  touched: boolean | undefined,
+  savedValue: string | null | undefined,
+): string {
+  if (!touched) return String(savedValue ?? "");
+  return value.trim();
 }
 
-export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
+export function SiteAppearanceForm({
+  settings,
+  supportsLogoStorage,
+  supportsHeaderTitleSize,
+}: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const logoUrlValue = settings.logoUrl ?? "";
   const logoAltFallback = `${settings.headerTitle} logo`;
   const logoAltValue =
@@ -95,6 +105,10 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
     DEFAULT_SITE_SETTINGS.cardRadiusPx,
   );
   const cardShadowValue = blankIfDefault(settings.cardShadow, DEFAULT_SITE_SETTINGS.cardShadow);
+  const headerTitleSizePxValue = blankIfDefault(
+    settings.headerTitleSizePx,
+    DEFAULT_SITE_SETTINGS.headerTitleSizePx,
+  );
 
   const [logoUrl, setLogoUrl] = useState(logoUrlValue);
   const [logoAlt, setLogoAlt] = useState(logoAltValue);
@@ -102,6 +116,40 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
   const [brandLine2, setBrandLine2] = useState(brandLine2Value);
   const [headerTitle, setHeaderTitle] = useState(headerTitleValue);
   const [headerSubtitle, setHeaderSubtitle] = useState(headerSubtitleValue);
+  const [headerTitleSizePx, setHeaderTitleSizePx] = useState(headerTitleSizePxValue);
+
+  function handleFieldInput(event: React.FormEvent<HTMLFormElement>) {
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    if (!target.name) return;
+
+    setTouchedFields((prev) => (prev[target.name] ? prev : { ...prev, [target.name]: true }));
+
+    switch (target.name) {
+      case "logoUrl":
+        setLogoUrl(target.value);
+        break;
+      case "logoAlt":
+        setLogoAlt(target.value);
+        break;
+      case "brandLine1":
+        setBrandLine1(target.value);
+        break;
+      case "brandLine2":
+        setBrandLine2(target.value);
+        break;
+      case "headerTitle":
+        setHeaderTitle(target.value);
+        break;
+      case "headerSubtitle":
+        setHeaderSubtitle(target.value);
+        break;
+      case "headerTitleSizePx":
+        setHeaderTitleSizePx(target.value);
+        break;
+      default:
+        break;
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -109,6 +157,31 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
     setPending(true);
     try {
       const fd = new FormData(e.currentTarget);
+      const preservedTextValues: Record<string, string> = {
+        logoAlt: settings.logoAlt ?? "",
+        brandLine1: settings.brandLine1,
+        brandLine2: settings.brandLine2,
+        headerTitle: settings.headerTitle,
+        headerSubtitle: settings.headerSubtitle,
+        heroTitle: settings.heroTitle,
+        heroLede: settings.heroLede,
+        emptyStateText: settings.emptyStateText,
+        loginTitle: settings.loginTitle,
+        loginLede: settings.loginLede,
+        loginBackLabel: settings.loginBackLabel,
+        manageAddTitle: settings.manageAddTitle,
+        manageAddBlurb: settings.manageAddBlurb,
+        manageOrderTitle: settings.manageOrderTitle,
+        manageOrderBlurb: settings.manageOrderBlurb,
+        manageEmptyDragText: settings.manageEmptyDragText,
+      };
+
+      for (const [name, originalValue] of Object.entries(preservedTextValues)) {
+        if (!touchedFields[name] && String(fd.get(name) ?? "") === "") {
+          fd.set(name, originalValue);
+        }
+      }
+
       const res = await updateSiteSettingsAction(fd);
       if (res.ok) {
         router.refresh();
@@ -125,12 +198,30 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
     }
   }
 
-  const previewTitle = previewText(headerTitle, DEFAULT_SITE_SETTINGS.headerTitle);
-  const previewSubtitle = previewText(headerSubtitle, DEFAULT_SITE_SETTINGS.headerSubtitle);
-  const previewBrandLine1 = previewText(brandLine1, DEFAULT_SITE_SETTINGS.brandLine1);
-  const previewBrandLine2 = previewText(brandLine2, DEFAULT_SITE_SETTINGS.brandLine2);
+  const previewTitle = previewValue(headerTitle, touchedFields.headerTitle, settings.headerTitle);
+  const previewSubtitle = previewValue(
+    headerSubtitle,
+    touchedFields.headerSubtitle,
+    settings.headerSubtitle,
+  );
+  const previewBrandLine1 = previewValue(
+    brandLine1,
+    touchedFields.brandLine1,
+    settings.brandLine1,
+  );
+  const previewBrandLine2 = previewValue(
+    brandLine2,
+    touchedFields.brandLine2,
+    settings.brandLine2,
+  );
   const previewLogoUrl = supportsLogoStorage ? logoUrl.trim() || null : null;
-  const previewLogoAlt = previewText(logoAlt, `${previewTitle} logo`);
+  const previewLogoAlt = previewValue(logoAlt, touchedFields.logoAlt, settings.logoAlt);
+  const previewHeaderTitleSize =
+    touchedFields.headerTitleSizePx
+      ? (headerTitleSizePx.trim() === ""
+          ? DEFAULT_SITE_SETTINGS.headerTitleSizePx
+          : Number(headerTitleSizePx))
+      : settings.headerTitleSizePx;
 
   return (
     <section className="mb-10 rounded-[18px] border border-[var(--wsu-gray-light)] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)]">
@@ -143,15 +234,15 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
           </p>
         </div>
         <div className="max-w-sm rounded-[18px] bg-[var(--wsu-bg)] px-4 py-3 text-sm leading-6 text-[var(--wsu-gray-mid)] ring-1 ring-black/5">
-          Boxes stay empty until you add custom copy or colors. Blank fields save back to the
-          built-in defaults.
+          Text fields are optional. Clear any copy field and save to hide it on the site. Color
+          and card styling inputs still fall back to their built-in defaults when left blank.
           {supportsLogoStorage
             ? " Add a logo URL to replace the text mark in the upper-left header."
             : " The header currently uses the text mark because this database has not enabled logo storage yet."}
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+      <form onSubmit={handleSubmit} onInputCapture={handleFieldInput} className="mt-6 space-y-8">
         {banner ? <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">{banner}</p> : null}
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,360px)]">
@@ -165,7 +256,6 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
                   <input
                     name="logoUrl"
                     defaultValue={logoUrlValue}
-                    onChange={(e) => setLogoUrl(e.target.value)}
                     inputMode="url"
                     className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                     placeholder="https://example.edu/logo.svg or /logo.png"
@@ -177,7 +267,6 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
                   <input
                     name="logoAlt"
                     defaultValue={logoAltValue}
-                    onChange={(e) => setLogoAlt(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                     placeholder="Graduate School logo"
                   />
@@ -201,7 +290,6 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
                 <input
                   name="brandLine1"
                   defaultValue={brandLine1Value}
-                  onChange={(e) => setBrandLine1(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                   placeholder={DEFAULT_SITE_SETTINGS.brandLine1}
                 />
@@ -211,7 +299,6 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
                 <input
                   name="brandLine2"
                   defaultValue={brandLine2Value}
-                  onChange={(e) => setBrandLine2(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                   placeholder={DEFAULT_SITE_SETTINGS.brandLine2}
                 />
@@ -223,7 +310,6 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
               <input
                 name="headerTitle"
                 defaultValue={headerTitleValue}
-                onChange={(e) => setHeaderTitle(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                 placeholder={DEFAULT_SITE_SETTINGS.headerTitle}
               />
@@ -234,11 +320,27 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
               <input
                 name="headerSubtitle"
                 defaultValue={headerSubtitleValue}
-                onChange={(e) => setHeaderSubtitle(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                 placeholder={DEFAULT_SITE_SETTINGS.headerSubtitle}
               />
             </label>
+
+            {supportsHeaderTitleSize ? (
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                Site title size (px)
+                <input
+                  name="headerTitleSizePx"
+                  type="number"
+                  min={18}
+                  max={40}
+                  defaultValue={headerTitleSizePxValue}
+                  className="mt-1 block w-32 rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                  placeholder={String(DEFAULT_SITE_SETTINGS.headerTitleSizePx)}
+                />
+              </label>
+            ) : (
+              <input type="hidden" name="headerTitleSizePx" value="" />
+            )}
           </fieldset>
 
           <aside className="rounded-[18px] bg-[var(--wsu-bg)] p-5 ring-1 ring-black/5">
@@ -251,6 +353,7 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
                 brandLine2={previewBrandLine2}
                 headerTitle={previewTitle}
                 headerSubtitle={previewSubtitle}
+                headerTitleSizePx={previewHeaderTitleSize}
                 logoUrl={previewLogoUrl}
                 logoAlt={previewLogoAlt}
               />
@@ -259,6 +362,9 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
               {supportsLogoStorage
                 ? "Wide or tall logos scale naturally without a surrounding box. If you leave the logo URL blank, the header uses the text mark instead."
                 : "The preview shows the text mark layout that will be used until logo storage is enabled in the database."}
+              {!supportsHeaderTitleSize
+                ? " Title size uses the built-in default until the database migration adds header_title_size_px."
+                : ""}
             </p>
           </aside>
         </div>
@@ -489,7 +595,7 @@ export function SiteAppearanceForm({ settings, supportsLogoStorage }: Props) {
 
         <div className="flex flex-col gap-3 rounded-[18px] bg-[var(--wsu-bg)] px-4 py-4 ring-1 ring-black/5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm leading-6 text-[var(--wsu-gray-mid)]">
-            Blank fields revert to the built-in default when you save.
+            Text fields can be left blank. Color and card settings revert to defaults if blank.
           </p>
           <button
             type="submit"

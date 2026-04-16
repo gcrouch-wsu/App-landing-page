@@ -30,15 +30,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             brandLine2={settings.brandLine2}
             headerTitle={settings.headerTitle}
             headerSubtitle={settings.headerSubtitle}
+            headerTitleSizePx={settings.headerTitleSizePx}
             logoUrl={settings.logoUrl}
             logoAlt={settings.logoAlt}
           />
-          <Link
-            href="/"
-            className="rounded-full border border-[var(--wsu-gray-light)] px-4 py-2 text-sm font-semibold text-[var(--wsu-gray)] transition hover:bg-[var(--wsu-bg)]"
-          >
-            {settings.loginBackLabel}
-          </Link>
+          {settings.loginBackLabel ? (
+            <Link
+              href="/"
+              className="rounded-full border border-[var(--wsu-gray-light)] px-4 py-2 text-sm font-semibold text-[var(--wsu-gray)] transition hover:bg-[var(--wsu-bg)]"
+            >
+              {settings.loginBackLabel}
+            </Link>
+          ) : null}
         </div>
       </header>
 
@@ -48,12 +51,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--wsu-crimson)]">
               Shared admin access
             </p>
-            <h1 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight text-[var(--wsu-gray)]">
-              {settings.loginTitle}
-            </h1>
-            <p className="mt-4 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-[var(--wsu-gray-mid)]">
-              {settings.loginLede}
-            </p>
+            {settings.loginTitle ? (
+              <h1 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight text-[var(--wsu-gray)]">
+                {settings.loginTitle}
+              </h1>
+            ) : null}
+            {settings.loginLede ? (
+              <p className="mt-4 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-[var(--wsu-gray-mid)]">
+                {settings.loginLede}
+              </p>
+            ) : null}
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-[18px] bg-white/80 p-4 ring-1 ring-black/5 backdrop-blur">

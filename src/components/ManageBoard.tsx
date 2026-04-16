@@ -130,10 +130,12 @@ export function ManageBoard({
   initialApps,
   settings,
   supportsLogoStorage,
+  supportsHeaderTitleSize,
 }: {
   initialApps: AppCard[];
   settings: SiteSettingsRow;
   supportsLogoStorage: boolean;
+  supportsHeaderTitleSize: boolean;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("appearance");
@@ -237,6 +239,7 @@ export function ManageBoard({
           key={settings.updatedAt?.valueOf() ?? "defaults"}
           settings={settings}
           supportsLogoStorage={supportsLogoStorage}
+          supportsHeaderTitleSize={supportsHeaderTitleSize}
         />
       </section>
 
@@ -248,10 +251,14 @@ export function ManageBoard({
         className={activeTab === "add" ? "block" : "hidden"}
       >
         <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
-          <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageAddTitle}</h2>
-          <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
-            {settings.manageAddBlurb}
-          </p>
+          {settings.manageAddTitle ? (
+            <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">{settings.manageAddTitle}</h2>
+          ) : null}
+          {settings.manageAddBlurb ? (
+            <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
+              {settings.manageAddBlurb}
+            </p>
+          ) : null}
 
           <form id="add-app-form" action={handleAdd} className="space-y-3">
             <div>
@@ -335,12 +342,16 @@ export function ManageBoard({
         <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">
-                {settings.manageOrderTitle}
-              </h2>
-              <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
-                {settings.manageOrderBlurb}
-              </p>
+              {settings.manageOrderTitle ? (
+                <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">
+                  {settings.manageOrderTitle}
+                </h2>
+              ) : null}
+              {settings.manageOrderBlurb ? (
+                <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
+                  {settings.manageOrderBlurb}
+                </p>
+              ) : null}
             </div>
             <div className="rounded-full bg-[var(--wsu-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
               {items.length} card{items.length === 1 ? "" : "s"}
@@ -349,9 +360,11 @@ export function ManageBoard({
 
           <div className="min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
             {items.length === 0 ? (
-              <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
-                {settings.manageEmptyDragText}
-              </p>
+              settings.manageEmptyDragText ? (
+                <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
+                  {settings.manageEmptyDragText}
+                </p>
+              ) : null
             ) : (
               <DndContext
                 sensors={sensors}

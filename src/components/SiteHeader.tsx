@@ -29,6 +29,7 @@ export async function SiteHeader({ settings }: Props) {
             brandLine2={settings.brandLine2}
             headerTitle={settings.headerTitle}
             headerSubtitle={settings.headerSubtitle}
+            headerTitleSizePx={settings.headerTitleSizePx}
             logoUrl={settings.logoUrl}
             logoAlt={settings.logoAlt}
           />

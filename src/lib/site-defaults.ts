@@ -8,6 +8,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRow = {
   brandLine2: "Grad",
   headerTitle: "Graduate School Tools",
   headerSubtitle: "Internal directory",
+  headerTitleSizePx: 28,
   heroTitle: "Applications",
   heroLede:
     "This directory is public. Use Manage apps to sign in and update links, descriptions, ordering, and branding.",

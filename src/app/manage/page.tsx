@@ -2,13 +2,18 @@ import { DbSetupHint } from "@/components/DbSetupHint";
 import { ManageBoard } from "@/components/ManageBoard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { listAppsOrdered } from "@/lib/apps";
-import { getSiteSettings, siteSettingsSupportLogoColumns } from "@/lib/settings";
+import {
+  getSiteSettings,
+  siteSettingsSupportHeaderTitleSizeColumn,
+  siteSettingsSupportLogoColumns,
+} from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function ManagePage() {
   const settings = await getSiteSettings();
   const supportsLogoStorage = await siteSettingsSupportLogoColumns();
+  const supportsHeaderTitleSize = await siteSettingsSupportHeaderTitleSizeColumn();
 
   let apps;
   try {
@@ -30,6 +35,7 @@ export default async function ManagePage() {
         initialApps={apps}
         settings={settings}
         supportsLogoStorage={supportsLogoStorage}
+        supportsHeaderTitleSize={supportsHeaderTitleSize}
       />
     </>
   );

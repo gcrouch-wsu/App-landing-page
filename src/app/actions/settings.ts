@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getDb } from "@/lib/db";
 import {
   DEFAULT_SITE_SETTINGS,
-  siteSettingsSupportLogoColumns,
+  getSiteSettingsCapabilities,
 } from "@/lib/settings";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
@@ -42,6 +42,19 @@ const radiusOrBlank = z.preprocess(
     .optional(),
 );
 
+const titleSizeOrBlank = z.preprocess(
+  (value) => {
+    const text = String(value ?? "").trim();
+    return text === "" ? undefined : Number(text);
+  },
+  z
+    .number()
+    .int()
+    .min(18, "Use a value between 18 and 40")
+    .max(40, "Use a value between 18 and 40")
+    .optional(),
+);
+
 const shadowOrBlank = z.preprocess(
   (value) => {
     const text = String(value ?? "").trim();
@@ -57,6 +70,7 @@ const settingsSchema = z.object({
   brandLine2: textOrBlank(40),
   headerTitle: textOrBlank(120),
   headerSubtitle: textOrBlank(200),
+  headerTitleSizePx: titleSizeOrBlank,
   heroTitle: textOrBlank(120),
   heroLede: textOrBlank(2000),
   emptyStateText: textOrBlank(2000),
@@ -87,36 +101,38 @@ function readString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
 }
 
+function cleanText(value: string): string {
+  return value.trim();
+}
+
 function fallbackText(value: string, fallback: string): string {
   const trimmed = value.trim();
   return trimmed || fallback;
 }
 
 function buildNormalizedSettings(v: z.infer<typeof settingsSchema>) {
-  const headerTitle = fallbackText(v.headerTitle, DEFAULT_SITE_SETTINGS.headerTitle);
+  const headerTitle = cleanText(v.headerTitle);
   const logoUrl = v.logoUrl || null;
 
   return {
     logoUrl,
-    logoAlt: logoUrl ? fallbackText(v.logoAlt, `${headerTitle} logo`) : null,
-    brandLine1: fallbackText(v.brandLine1, DEFAULT_SITE_SETTINGS.brandLine1),
-    brandLine2: fallbackText(v.brandLine2, DEFAULT_SITE_SETTINGS.brandLine2),
+    logoAlt: logoUrl ? cleanText(v.logoAlt) || null : null,
+    brandLine1: cleanText(v.brandLine1),
+    brandLine2: cleanText(v.brandLine2),
     headerTitle,
-    headerSubtitle: fallbackText(v.headerSubtitle, DEFAULT_SITE_SETTINGS.headerSubtitle),
-    heroTitle: fallbackText(v.heroTitle, DEFAULT_SITE_SETTINGS.heroTitle),
-    heroLede: fallbackText(v.heroLede, DEFAULT_SITE_SETTINGS.heroLede),
-    emptyStateText: fallbackText(v.emptyStateText, DEFAULT_SITE_SETTINGS.emptyStateText),
-    manageAddTitle: fallbackText(v.manageAddTitle, DEFAULT_SITE_SETTINGS.manageAddTitle),
-    manageAddBlurb: fallbackText(v.manageAddBlurb, DEFAULT_SITE_SETTINGS.manageAddBlurb),
-    manageOrderTitle: fallbackText(v.manageOrderTitle, DEFAULT_SITE_SETTINGS.manageOrderTitle),
-    manageOrderBlurb: fallbackText(v.manageOrderBlurb, DEFAULT_SITE_SETTINGS.manageOrderBlurb),
-    manageEmptyDragText: fallbackText(
-      v.manageEmptyDragText,
-      DEFAULT_SITE_SETTINGS.manageEmptyDragText,
-    ),
-    loginTitle: fallbackText(v.loginTitle, DEFAULT_SITE_SETTINGS.loginTitle),
-    loginLede: fallbackText(v.loginLede, DEFAULT_SITE_SETTINGS.loginLede),
-    loginBackLabel: fallbackText(v.loginBackLabel, DEFAULT_SITE_SETTINGS.loginBackLabel),
+    headerSubtitle: cleanText(v.headerSubtitle),
+    headerTitleSizePx: v.headerTitleSizePx ?? DEFAULT_SITE_SETTINGS.headerTitleSizePx,
+    heroTitle: cleanText(v.heroTitle),
+    heroLede: cleanText(v.heroLede),
+    emptyStateText: cleanText(v.emptyStateText),
+    manageAddTitle: cleanText(v.manageAddTitle),
+    manageAddBlurb: cleanText(v.manageAddBlurb),
+    manageOrderTitle: cleanText(v.manageOrderTitle),
+    manageOrderBlurb: cleanText(v.manageOrderBlurb),
+    manageEmptyDragText: cleanText(v.manageEmptyDragText),
+    loginTitle: cleanText(v.loginTitle),
+    loginLede: cleanText(v.loginLede),
+    loginBackLabel: cleanText(v.loginBackLabel),
     colorPrimary: fallbackText(v.colorPrimary, DEFAULT_SITE_SETTINGS.colorPrimary),
     colorPrimaryDark: fallbackText(v.colorPrimaryDark, DEFAULT_SITE_SETTINGS.colorPrimaryDark),
     colorText: fallbackText(v.colorText, DEFAULT_SITE_SETTINGS.colorText),
@@ -140,8 +156,104 @@ async function requireSession() {
   }
 }
 
-async function saveLegacySettings(settings: NormalizedSettings) {
+async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTitleSize: boolean) {
   const db = getDb();
+  if (supportsHeaderTitleSize) {
+    await db.execute(sql`
+      insert into "site_settings" (
+        "id",
+        "brand_line1",
+        "brand_line2",
+        "header_title",
+        "header_subtitle",
+        "header_title_size_px",
+        "hero_title",
+        "hero_lede",
+        "empty_state_text",
+        "manage_add_title",
+        "manage_add_blurb",
+        "manage_order_title",
+        "manage_order_blurb",
+        "manage_empty_drag_text",
+        "login_title",
+        "login_lede",
+        "login_back_label",
+        "color_primary",
+        "color_primary_dark",
+        "color_text",
+        "color_text_muted",
+        "color_border",
+        "color_page_bg",
+        "color_card_bg",
+        "color_card_accent",
+        "color_url_on_card",
+        "card_radius_px",
+        "card_shadow",
+        "updated_at"
+      ) values (
+        1,
+        ${settings.brandLine1},
+        ${settings.brandLine2},
+        ${settings.headerTitle},
+        ${settings.headerSubtitle},
+        ${settings.headerTitleSizePx},
+        ${settings.heroTitle},
+        ${settings.heroLede},
+        ${settings.emptyStateText},
+        ${settings.manageAddTitle},
+        ${settings.manageAddBlurb},
+        ${settings.manageOrderTitle},
+        ${settings.manageOrderBlurb},
+        ${settings.manageEmptyDragText},
+        ${settings.loginTitle},
+        ${settings.loginLede},
+        ${settings.loginBackLabel},
+        ${settings.colorPrimary},
+        ${settings.colorPrimaryDark},
+        ${settings.colorText},
+        ${settings.colorTextMuted},
+        ${settings.colorBorder},
+        ${settings.colorPageBg},
+        ${settings.colorCardBg},
+        ${settings.colorCardAccent},
+        ${settings.colorUrlOnCard},
+        ${settings.cardRadiusPx},
+        ${settings.cardShadow},
+        ${settings.updatedAt}
+      )
+      on conflict ("id") do update set
+        "brand_line1" = excluded."brand_line1",
+        "brand_line2" = excluded."brand_line2",
+        "header_title" = excluded."header_title",
+        "header_subtitle" = excluded."header_subtitle",
+        "header_title_size_px" = excluded."header_title_size_px",
+        "hero_title" = excluded."hero_title",
+        "hero_lede" = excluded."hero_lede",
+        "empty_state_text" = excluded."empty_state_text",
+        "manage_add_title" = excluded."manage_add_title",
+        "manage_add_blurb" = excluded."manage_add_blurb",
+        "manage_order_title" = excluded."manage_order_title",
+        "manage_order_blurb" = excluded."manage_order_blurb",
+        "manage_empty_drag_text" = excluded."manage_empty_drag_text",
+        "login_title" = excluded."login_title",
+        "login_lede" = excluded."login_lede",
+        "login_back_label" = excluded."login_back_label",
+        "color_primary" = excluded."color_primary",
+        "color_primary_dark" = excluded."color_primary_dark",
+        "color_text" = excluded."color_text",
+        "color_text_muted" = excluded."color_text_muted",
+        "color_border" = excluded."color_border",
+        "color_page_bg" = excluded."color_page_bg",
+        "color_card_bg" = excluded."color_card_bg",
+        "color_card_accent" = excluded."color_card_accent",
+        "color_url_on_card" = excluded."color_url_on_card",
+        "card_radius_px" = excluded."card_radius_px",
+        "card_shadow" = excluded."card_shadow",
+        "updated_at" = excluded."updated_at"
+    `);
+    return;
+  }
+
   await db.execute(sql`
     insert into "site_settings" (
       "id",
@@ -233,8 +345,110 @@ async function saveLegacySettings(settings: NormalizedSettings) {
   `);
 }
 
-async function saveLogoSettings(settings: NormalizedSettings) {
+async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitleSize: boolean) {
   const db = getDb();
+  if (supportsHeaderTitleSize) {
+    await db.execute(sql`
+      insert into "site_settings" (
+        "id",
+        "logo_url",
+        "logo_alt",
+        "brand_line1",
+        "brand_line2",
+        "header_title",
+        "header_subtitle",
+        "header_title_size_px",
+        "hero_title",
+        "hero_lede",
+        "empty_state_text",
+        "manage_add_title",
+        "manage_add_blurb",
+        "manage_order_title",
+        "manage_order_blurb",
+        "manage_empty_drag_text",
+        "login_title",
+        "login_lede",
+        "login_back_label",
+        "color_primary",
+        "color_primary_dark",
+        "color_text",
+        "color_text_muted",
+        "color_border",
+        "color_page_bg",
+        "color_card_bg",
+        "color_card_accent",
+        "color_url_on_card",
+        "card_radius_px",
+        "card_shadow",
+        "updated_at"
+      ) values (
+        1,
+        ${settings.logoUrl},
+        ${settings.logoAlt},
+        ${settings.brandLine1},
+        ${settings.brandLine2},
+        ${settings.headerTitle},
+        ${settings.headerSubtitle},
+        ${settings.headerTitleSizePx},
+        ${settings.heroTitle},
+        ${settings.heroLede},
+        ${settings.emptyStateText},
+        ${settings.manageAddTitle},
+        ${settings.manageAddBlurb},
+        ${settings.manageOrderTitle},
+        ${settings.manageOrderBlurb},
+        ${settings.manageEmptyDragText},
+        ${settings.loginTitle},
+        ${settings.loginLede},
+        ${settings.loginBackLabel},
+        ${settings.colorPrimary},
+        ${settings.colorPrimaryDark},
+        ${settings.colorText},
+        ${settings.colorTextMuted},
+        ${settings.colorBorder},
+        ${settings.colorPageBg},
+        ${settings.colorCardBg},
+        ${settings.colorCardAccent},
+        ${settings.colorUrlOnCard},
+        ${settings.cardRadiusPx},
+        ${settings.cardShadow},
+        ${settings.updatedAt}
+      )
+      on conflict ("id") do update set
+        "logo_url" = excluded."logo_url",
+        "logo_alt" = excluded."logo_alt",
+        "brand_line1" = excluded."brand_line1",
+        "brand_line2" = excluded."brand_line2",
+        "header_title" = excluded."header_title",
+        "header_subtitle" = excluded."header_subtitle",
+        "header_title_size_px" = excluded."header_title_size_px",
+        "hero_title" = excluded."hero_title",
+        "hero_lede" = excluded."hero_lede",
+        "empty_state_text" = excluded."empty_state_text",
+        "manage_add_title" = excluded."manage_add_title",
+        "manage_add_blurb" = excluded."manage_add_blurb",
+        "manage_order_title" = excluded."manage_order_title",
+        "manage_order_blurb" = excluded."manage_order_blurb",
+        "manage_empty_drag_text" = excluded."manage_empty_drag_text",
+        "login_title" = excluded."login_title",
+        "login_lede" = excluded."login_lede",
+        "login_back_label" = excluded."login_back_label",
+        "color_primary" = excluded."color_primary",
+        "color_primary_dark" = excluded."color_primary_dark",
+        "color_text" = excluded."color_text",
+        "color_text_muted" = excluded."color_text_muted",
+        "color_border" = excluded."color_border",
+        "color_page_bg" = excluded."color_page_bg",
+        "color_card_bg" = excluded."color_card_bg",
+        "color_card_accent" = excluded."color_card_accent",
+        "color_url_on_card" = excluded."color_url_on_card",
+        "card_radius_px" = excluded."card_radius_px",
+        "card_shadow" = excluded."card_shadow",
+        "updated_at" = excluded."updated_at"
+    `);
+    return;
+  }
+
   await db.execute(sql`
     insert into "site_settings" (
       "id",
@@ -342,6 +556,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     brandLine2: readString(formData, "brandLine2"),
     headerTitle: readString(formData, "headerTitle"),
     headerSubtitle: readString(formData, "headerSubtitle"),
+    headerTitleSizePx: readString(formData, "headerTitleSizePx"),
     heroTitle: readString(formData, "heroTitle"),
     heroLede: readString(formData, "heroLede"),
     emptyStateText: readString(formData, "emptyStateText"),
@@ -373,22 +588,27 @@ export async function updateSiteSettingsAction(formData: FormData) {
 
   const normalized = buildNormalizedSettings(parsed.data);
   const requestedLogo = Boolean(normalized.logoUrl);
+  const requestedHeaderTitleSize = readString(formData, "headerTitleSizePx").trim() !== "";
 
   try {
-    const supportsLogoStorage = await siteSettingsSupportLogoColumns();
-    if (supportsLogoStorage) {
-      await saveLogoSettings(normalized);
+    const capabilities = await getSiteSettingsCapabilities();
+    if (capabilities.supportsLogoStorage) {
+      await saveLogoSettings(normalized, capabilities.supportsHeaderTitleSize);
     } else {
-      await saveLegacySettings(normalized);
+      await saveLegacySettings(normalized, capabilities.supportsHeaderTitleSize);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save settings right now.";
-    const missingLogoColumn =
-      message.includes("logo_url") || message.includes("logo_alt") || message.includes("site_settings");
+    const missingLogoColumn = message.includes("logo_url") || message.includes("logo_alt");
+    const missingHeaderTitleSizeColumn = message.includes("header_title_size_px");
 
-    if (missingLogoColumn) {
+    if (missingLogoColumn || missingHeaderTitleSizeColumn) {
       try {
-        await saveLegacySettings(normalized);
+        if (missingLogoColumn) {
+          await saveLegacySettings(normalized, false);
+        } else {
+          await saveLogoSettings(normalized, false);
+        }
       } catch (retryError) {
         return {
           ok: false as const,
@@ -402,14 +622,22 @@ export async function updateSiteSettingsAction(formData: FormData) {
         };
       }
 
-      if (requestedLogo) {
+      const fieldErrors: Record<string, string[]> = {};
+      if (requestedLogo && missingLogoColumn) {
+        fieldErrors.logoUrl = [
+          "Logo storage is not available until the database migration is applied. Other settings were saved.",
+        ];
+      }
+      if (requestedHeaderTitleSize && missingHeaderTitleSizeColumn) {
+        fieldErrors.headerTitleSizePx = [
+          "Header title sizing is not available until the database migration is applied. Other settings were saved.",
+        ];
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
         return {
           ok: false as const,
-          error: {
-            logoUrl: [
-              "Logo storage is not available until the database migration is applied. Other settings were saved.",
-            ],
-          },
+          error: fieldErrors,
         };
       }
     } else {

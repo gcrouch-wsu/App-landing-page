@@ -28,6 +28,7 @@ export const siteSettings = pgTable("site_settings", {
   brandLine2: text("brand_line2").notNull().default("Grad"),
   headerTitle: text("header_title").notNull().default("Graduate School Tools"),
   headerSubtitle: text("header_subtitle").notNull().default("Internal directory"),
+  headerTitleSizePx: integer("header_title_size_px").notNull().default(28),
   heroTitle: text("hero_title").notNull().default("Applications"),
   heroLede: text("hero_lede")
     .notNull()
