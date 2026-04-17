@@ -12,6 +12,7 @@ import {
 import {
   SortableContext,
   arrayMove,
+  rectSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -25,6 +26,7 @@ import {
   reorderAppsAction,
   updateAppAction,
 } from "@/app/actions/apps";
+import { updateSiteSettingsAction } from "@/app/actions/settings";
 import { AppTile } from "@/components/AppTile";
 import { CardStyleForm } from "@/components/CardStyleForm";
 import { LiveSiteTheme } from "@/components/LiveSiteTheme";
@@ -114,12 +116,14 @@ function previewAppsForStyling(items: AppCard[]): AppCard[] {
 function SortableRow({
   app,
   editing,
+  gridMode,
   onEdit,
   onRemove,
   removing,
 }: {
   app: AppCard;
   editing: boolean;
+  gridMode: boolean;
   onEdit: (app: AppCard) => void;
   onRemove: (id: string) => void;
   removing: boolean;
@@ -133,6 +137,53 @@ function SortableRow({
     transition,
     opacity: isDragging ? 0.85 : 1,
   };
+
+  if (gridMode) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`flex h-full flex-col rounded-[18px] p-2 ${
+          editing ? "bg-[var(--wsu-bg)] ring-1 ring-[var(--wsu-crimson)]/20" : ""
+        }`}
+      >
+        <div className="min-h-0 flex-1">
+          <AppTile app={app} />
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg border border-dashed border-[var(--wsu-gray-light)] bg-white text-[var(--wsu-gray-mid)] hover:bg-[var(--wsu-bg)] active:cursor-grabbing"
+            aria-label={`Drag to reorder ${app.title}`}
+            {...attributes}
+            {...listeners}
+          >
+            <span className="font-mono text-sm leading-none text-[var(--wsu-gray-mid)]">::</span>
+          </button>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={() => onEdit(app)}
+            className={`h-8 shrink-0 rounded-lg border px-2.5 text-xs font-semibold transition ${
+              editing
+                ? "border-[var(--wsu-crimson)] bg-[var(--wsu-crimson)] text-white hover:bg-[var(--wsu-crimson-dark)]"
+                : "border-[var(--wsu-gray-light)] text-[var(--wsu-gray)] hover:bg-[var(--wsu-bg)]"
+            }`}
+          >
+            {editing ? "Editing" : "Edit"}
+          </button>
+          <button
+            type="button"
+            disabled={removing}
+            onClick={() => onRemove(app.id)}
+            className="h-8 shrink-0 rounded-lg border border-[var(--wsu-gray-light)] px-2.5 text-xs font-semibold text-[var(--wsu-crimson)] hover:bg-red-50 disabled:opacity-50"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -241,6 +292,7 @@ export function ManageBoard({
   );
   const [editBanner, setEditBanner] = useState<string | null>(null);
   const [liveSettings, setLiveSettings] = useState<SiteSettingsRow>(settings);
+  const [gridColumns, setGridColumns] = useState(settings.gridColumns ?? 3);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -280,6 +332,27 @@ export function ManageBoard({
       description: app.description ?? "",
     });
   }, []);
+
+  const handleColumnChange = useCallback(
+    (cols: number) => {
+      setGridColumns(cols);
+      startListTransition(async () => {
+        const fd = new FormData();
+        fd.set("gridColumns", String(cols));
+        await updateSiteSettingsAction(fd);
+        syncFromServer();
+      });
+    },
+    [syncFromServer, startListTransition],
+  );
+
+  const sortStrategy = gridColumns > 1 ? rectSortingStrategy : verticalListSortingStrategy;
+  const gridCls =
+    gridColumns === 3
+      ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+      : gridColumns === 2
+        ? "grid-cols-1 md:grid-cols-2"
+        : "grid-cols-1";
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -387,6 +460,7 @@ export function ManageBoard({
 
   useEffect(() => {
     setLiveSettings(settings);
+    setGridColumns(settings.gridColumns ?? 3);
   }, [settings]);
 
   useEffect(() => {
@@ -564,18 +638,35 @@ export function ManageBoard({
         >
           <div className="space-y-6">
             <section className="rounded-[18px] border border-[var(--wsu-gray-light)] bg-[var(--wsu-bg)]/65 p-6 ring-1 ring-black/5">
-              <div className="max-w-2xl">
-                <h3 className="text-lg font-bold text-[var(--wsu-gray)]">
-                  Live public card rendering
-                </h3>
-                <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-                  This uses the same `AppTile` component as the public landing page, including
-                  the linked card footer. The public page still renders as 1 column on small
-                  screens, 2 on medium, and 3 on extra-large screens.
-                </p>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-2xl">
+                  <h3 className="text-lg font-bold text-[var(--wsu-gray)]">
+                    Live public card rendering
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
+                    Choose how many columns the public page uses. Drag cards below to
+                    reorder within the selected layout.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/5">
+                  {([1, 2, 3] as const).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => handleColumnChange(n)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                        gridColumns === n
+                          ? "bg-[var(--wsu-crimson)] text-white shadow-sm"
+                          : "text-[var(--wsu-gray-mid)] hover:bg-[var(--wsu-bg)] hover:text-[var(--wsu-gray)]"
+                      }`}
+                    >
+                      {n} col{n > 1 ? "s" : ""}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className={`mt-6 grid gap-5 ${gridCls}`}>
                 {previewApps.map((app) => (
                   <AppTile key={`preview-${app.id}`} app={app} href={app.url} />
                 ))}
@@ -793,13 +884,14 @@ export function ManageBoard({
                     collisionDetection={closestCenter}
                     onDragEnd={handleDragEnd}
                   >
-                    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                    <SortableContext items={ids} strategy={sortStrategy}>
+                      <ul className={`m-0 list-none gap-3 p-0 ${gridColumns > 1 ? `grid ${gridCls}` : "flex flex-col"}`}>
                         {items.map((app) => (
-                          <li key={app.id}>
+                          <li key={app.id} className={gridColumns > 1 ? "h-full" : ""}>
                             <SortableRow
                               app={app}
                               editing={editingId === app.id}
+                              gridMode={gridColumns > 1}
                               onEdit={beginEdit}
                               onRemove={handleRemove}
                               removing={removingId === app.id && listPending}

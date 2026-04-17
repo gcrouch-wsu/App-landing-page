@@ -42,7 +42,7 @@ export default async function HomePage() {
               </p>
             ) : null
           ) : (
-            <ul className="m-0 grid list-none grid-cols-1 gap-5 p-0 md:grid-cols-2 xl:grid-cols-3">
+            <ul className={`m-0 grid list-none grid-cols-1 gap-5 p-0 ${settings.gridColumns === 2 ? "md:grid-cols-2" : settings.gridColumns === 3 ? "md:grid-cols-2 xl:grid-cols-3" : ""}`}>
               {apps.map((app) => (
                 <li key={app.id} className="h-full">
                   <AppTile app={app} href={app.url} />

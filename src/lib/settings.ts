@@ -78,6 +78,7 @@ function normalizeSettingsRow(
       DEFAULT_SITE_SETTINGS.cardAccentHeightPx,
     ),
     cardRadiusPx: readNumber(row.cardRadiusPx, DEFAULT_SITE_SETTINGS.cardRadiusPx),
+    gridColumns: readNumber(row.gridColumns, DEFAULT_SITE_SETTINGS.gridColumns),
     updatedAt:
       row.updatedAt instanceof Date
         ? row.updatedAt
@@ -145,7 +146,7 @@ async function querySiteSettings(): Promise<SiteSettingsRow | null> {
       "card_font_family", "card_action_font_family", "card_action_font_weight",
       "card_title_size_px", "card_url_size_px",
       "card_description_size_px", "card_padding_px", "card_accent_height_px",
-      "card_radius_px", "card_shadow", "updated_at"
+      "card_radius_px", "card_shadow", "grid_columns", "updated_at"
     ];
 
     for (const f of allExpected) {

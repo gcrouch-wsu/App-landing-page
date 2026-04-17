@@ -53,5 +53,6 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRow = {
   cardAccentHeightPx: 6,
   cardRadiusPx: 10,
   cardShadow: "md",
+  gridColumns: 3,
   updatedAt: null,
 };

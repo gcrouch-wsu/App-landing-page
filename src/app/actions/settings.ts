@@ -150,6 +150,7 @@ const settingsSchema = z.object({
   cardAccentHeightPx: numberOrBlank(2, 16),
   cardRadiusPx: numberOrBlank(4, 32),
   cardShadow: shadowOrBlank,
+  gridColumns: numberOrBlank(1, 3),
 });
 
 type NormalizedSettings = ReturnType<typeof buildNormalizedSettings>;
@@ -236,6 +237,7 @@ function buildNormalizedSettings(v: z.infer<typeof settingsSchema>) {
     cardAccentHeightPx: v.cardAccentHeightPx ?? DEFAULT_SITE_SETTINGS.cardAccentHeightPx,
     cardRadiusPx: v.cardRadiusPx ?? DEFAULT_SITE_SETTINGS.cardRadiusPx,
     cardShadow: v.cardShadow ?? DEFAULT_SITE_SETTINGS.cardShadow,
+    gridColumns: v.gridColumns ?? DEFAULT_SITE_SETTINGS.gridColumns,
     updatedAt: new Date(),
   };
 }
@@ -256,6 +258,7 @@ type Capabilities = {
   supportsHeaderSpacing: boolean;
   supportsAdvancedCardStyling: boolean;
   supportsActionLabelTypography: boolean;
+  supportsGridColumns: boolean;
 };
 
 async function saveSettings(settings: NormalizedSettings, caps: Capabilities) {
@@ -337,6 +340,9 @@ async function saveSettings(settings: NormalizedSettings, caps: Capabilities) {
   }
   add("card_radius_px", settings.cardRadiusPx);
   add("card_shadow", settings.cardShadow);
+  if (caps.supportsGridColumns) {
+    add("grid_columns", settings.gridColumns);
+  }
   add("updated_at", settings.updatedAt);
 
   await db.execute(sql`
@@ -515,6 +521,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     ),
     cardRadiusPx: readMergedValue(formData, "cardRadiusPx", currentSettings.cardRadiusPx),
     cardShadow: readMergedValue(formData, "cardShadow", currentSettings.cardShadow),
+    gridColumns: readMergedValue(formData, "gridColumns", currentSettings.gridColumns),
   };
 
   const parsed = settingsSchema.safeParse(raw);
@@ -556,6 +563,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
       supportsActionLabelTypography:
         existingColumns.has("card_action_font_family") &&
         existingColumns.has("card_action_font_weight"),
+      supportsGridColumns: existingColumns.has("grid_columns"),
     };
 
     await saveSettings(normalized, caps);

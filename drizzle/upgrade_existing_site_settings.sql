@@ -477,3 +477,16 @@ UPDATE "site_settings"
 SET "login_back_label" = 'Back to directory'
 WHERE "login_back_label" <> 'Back to directory'
   AND "login_back_label" IS NOT NULL;
+
+ALTER TABLE "site_settings"
+ADD COLUMN IF NOT EXISTS "grid_columns" smallint;
+
+UPDATE "site_settings"
+SET "grid_columns" = 3
+WHERE "grid_columns" IS NULL;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "grid_columns" SET DEFAULT 3;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "grid_columns" SET NOT NULL;

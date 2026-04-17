@@ -71,6 +71,7 @@ export const siteSettings = pgTable("site_settings", {
   cardAccentHeightPx: integer("card_accent_height_px").notNull().default(6),
   cardRadiusPx: integer("card_radius_px").notNull().default(10),
   cardShadow: text("card_shadow").notNull().default("md"),
+  gridColumns: smallint("grid_columns").notNull().default(3),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
