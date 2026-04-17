@@ -1,4 +1,5 @@
 import type { SiteSettingsRow } from "@/lib/schema";
+import { cardFontFamilies } from "@/lib/site-fonts";
 
 export type ThemeSettings = Pick<
   SiteSettingsRow,
@@ -43,17 +44,7 @@ function cardShadowValue(key: string): string {
 }
 
 export function resolveCardFontFamily(key: string): string {
-  switch (key) {
-    case "ibm-plex-sans":
-      return "var(--font-ibm-plex-sans), system-ui, sans-serif";
-    case "space-grotesk":
-      return "var(--font-space-grotesk), system-ui, sans-serif";
-    case "source-serif-4":
-      return "var(--font-source-serif-4), Georgia, serif";
-    case "montserrat":
-    default:
-      return "var(--font-montserrat), system-ui, sans-serif";
-  }
+  return cardFontFamilies[key as keyof typeof cardFontFamilies] ?? cardFontFamilies.montserrat;
 }
 
 export function buildSiteThemeCss(settings: ThemeSettings): string {
