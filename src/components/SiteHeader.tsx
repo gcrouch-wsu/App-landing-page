@@ -32,6 +32,8 @@ export async function SiteHeader({ settings }: Props) {
             headerTitleSizePx={settings.headerTitleSizePx}
             logoUrl={settings.logoUrl}
             logoAlt={settings.logoAlt}
+            logoSizePx={settings.logoSizePx}
+            headerLayout={settings.headerLayout}
           />
 
           <nav className="flex items-center gap-3">

@@ -24,38 +24,24 @@ export const siteSettings = pgTable("site_settings", {
   id: smallint("id").primaryKey().default(1),
   logoUrl: text("logo_url"),
   logoAlt: text("logo_alt"),
-  brandLine1: text("brand_line1").notNull().default("WSU"),
-  brandLine2: text("brand_line2").notNull().default("Grad"),
-  headerTitle: text("header_title").notNull().default("Graduate School Tools"),
-  headerSubtitle: text("header_subtitle").notNull().default("Internal directory"),
-  headerTitleSizePx: integer("header_title_size_px").notNull().default(28),
-  heroTitle: text("hero_title").notNull().default("Applications"),
-  heroLede: text("hero_lede")
-    .notNull()
-    .default(
-      "This directory is public. Use Manage apps to sign in and update links, descriptions, ordering, and branding.",
-    ),
-  emptyStateText: text("empty_state_text")
-    .notNull()
-    .default("No applications yet. Use Manage apps to add the first card."),
-  manageAddTitle: text("manage_add_title").notNull().default("Add application"),
-  manageAddBlurb: text("manage_add_blurb")
-    .notNull()
-    .default(
-      "Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.",
-    ),
-  manageOrderTitle: text("manage_order_title").notNull().default("Card order"),
-  manageOrderBlurb: text("manage_order_blurb")
-    .notNull()
-    .default("Drag by the handle. The order here matches the public landing page."),
-  manageEmptyDragText: text("manage_empty_drag_text").notNull().default("No cards yet. Add one above."),
-  loginTitle: text("login_title").notNull().default("Sign in to manage the directory"),
-  loginLede: text("login_lede")
-    .notNull()
-    .default(
-      "Use the shared admin password to edit cards, update branding, and manage the header logo. You will land on the manage page after you sign in.",
-    ),
-  loginBackLabel: text("login_back_label").notNull().default("Back to directory"),
+  logoSizePx: integer("logo_size_px").notNull().default(160),
+  headerLayout: text("header_layout").notNull().default("side"), // 'side' or 'stacked'
+  brandLine1: text("brand_line1"),
+  brandLine2: text("brand_line2"),
+  headerTitle: text("header_title"),
+  headerSubtitle: text("header_subtitle"),
+  headerTitleSizePx: integer("header_title_size_px"),
+  heroTitle: text("hero_title"),
+  heroLede: text("hero_lede"),
+  emptyStateText: text("empty_state_text"),
+  manageAddTitle: text("manage_add_title"),
+  manageAddBlurb: text("manage_add_blurb"),
+  manageOrderTitle: text("manage_order_title"),
+  manageOrderBlurb: text("manage_order_blurb"),
+  manageEmptyDragText: text("manage_empty_drag_text"),
+  loginTitle: text("login_title"),
+  loginLede: text("login_lede"),
+  loginBackLabel: text("login_back_label"),
   colorPrimary: text("color_primary").notNull().default("#981e32"),
   colorPrimaryDark: text("color_primary_dark").notNull().default("#6d1524"),
   colorText: text("color_text").notNull().default("#393939"),

@@ -12,6 +12,7 @@ import {
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
 const shadowValues = ["none", "sm", "md", "lg"] as const;
+const headerLayoutValues = ["side", "stacked"] as const;
 
 const textOrBlank = (max: number) =>
   z.string().trim().max(max, `Keep this under ${max} characters`);
@@ -29,31 +30,19 @@ const logoUrlOrBlank = z
     "Use a full https:// URL or a root-relative /path",
   );
 
-const radiusOrBlank = z.preprocess(
-  (value) => {
-    const text = String(value ?? "").trim();
-    return text === "" ? undefined : Number(text);
-  },
-  z
-    .number()
-    .int()
-    .min(4, "Use a value between 4 and 32")
-    .max(32, "Use a value between 4 and 32")
-    .optional(),
-);
-
-const titleSizeOrBlank = z.preprocess(
-  (value) => {
-    const text = String(value ?? "").trim();
-    return text === "" ? undefined : Number(text);
-  },
-  z
-    .number()
-    .int()
-    .min(18, "Use a value between 18 and 40")
-    .max(40, "Use a value between 18 and 40")
-    .optional(),
-);
+const numberOrBlank = (min: number, max: number) =>
+  z.preprocess(
+    (value) => {
+      const text = String(value ?? "").trim();
+      return text === "" ? undefined : Number(text);
+    },
+    z
+      .number()
+      .int()
+      .min(min, `Use a value between ${min} and ${max}`)
+      .max(max, `Use a value between ${min} and ${max}`)
+      .optional(),
+  );
 
 const shadowOrBlank = z.preprocess(
   (value) => {
@@ -63,14 +52,24 @@ const shadowOrBlank = z.preprocess(
   z.enum(shadowValues).optional(),
 );
 
+const headerLayoutOrBlank = z.preprocess(
+  (value) => {
+    const text = String(value ?? "").trim();
+    return text === "" ? undefined : text;
+  },
+  z.enum(headerLayoutValues).optional(),
+);
+
 const settingsSchema = z.object({
   logoUrl: logoUrlOrBlank,
   logoAlt: textOrBlank(160),
+  logoSizePx: numberOrBlank(40, 400),
+  headerLayout: headerLayoutOrBlank,
   brandLine1: textOrBlank(40),
   brandLine2: textOrBlank(40),
   headerTitle: textOrBlank(120),
   headerSubtitle: textOrBlank(200),
-  headerTitleSizePx: titleSizeOrBlank,
+  headerTitleSizePx: numberOrBlank(18, 48),
   heroTitle: textOrBlank(120),
   heroLede: textOrBlank(2000),
   emptyStateText: textOrBlank(2000),
@@ -91,7 +90,7 @@ const settingsSchema = z.object({
   colorCardBg: hexOrBlank,
   colorCardAccent: hexOrBlank,
   colorUrlOnCard: hexOrBlank,
-  cardRadiusPx: radiusOrBlank,
+  cardRadiusPx: numberOrBlank(4, 32),
   cardShadow: shadowOrBlank,
 });
 
@@ -101,8 +100,9 @@ function readString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
 }
 
-function cleanText(value: string): string {
-  return value.trim();
+function cleanTextOrNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed || null;
 }
 
 function fallbackText(value: string, fallback: string): string {
@@ -111,28 +111,27 @@ function fallbackText(value: string, fallback: string): string {
 }
 
 function buildNormalizedSettings(v: z.infer<typeof settingsSchema>) {
-  const headerTitle = cleanText(v.headerTitle);
-  const logoUrl = v.logoUrl || null;
-
   return {
-    logoUrl,
-    logoAlt: logoUrl ? cleanText(v.logoAlt) || null : null,
-    brandLine1: cleanText(v.brandLine1),
-    brandLine2: cleanText(v.brandLine2),
-    headerTitle,
-    headerSubtitle: cleanText(v.headerSubtitle),
+    logoUrl: v.logoUrl || null,
+    logoAlt: v.logoUrl ? cleanTextOrNull(v.logoAlt) : null,
+    logoSizePx: v.logoSizePx ?? DEFAULT_SITE_SETTINGS.logoSizePx,
+    headerLayout: v.headerLayout ?? DEFAULT_SITE_SETTINGS.headerLayout,
+    brandLine1: cleanTextOrNull(v.brandLine1),
+    brandLine2: cleanTextOrNull(v.brandLine2),
+    headerTitle: cleanTextOrNull(v.headerTitle),
+    headerSubtitle: cleanTextOrNull(v.headerSubtitle),
     headerTitleSizePx: v.headerTitleSizePx ?? DEFAULT_SITE_SETTINGS.headerTitleSizePx,
-    heroTitle: cleanText(v.heroTitle),
-    heroLede: cleanText(v.heroLede),
-    emptyStateText: cleanText(v.emptyStateText),
-    manageAddTitle: cleanText(v.manageAddTitle),
-    manageAddBlurb: cleanText(v.manageAddBlurb),
-    manageOrderTitle: cleanText(v.manageOrderTitle),
-    manageOrderBlurb: cleanText(v.manageOrderBlurb),
-    manageEmptyDragText: cleanText(v.manageEmptyDragText),
-    loginTitle: cleanText(v.loginTitle),
-    loginLede: cleanText(v.loginLede),
-    loginBackLabel: cleanText(v.loginBackLabel),
+    heroTitle: cleanTextOrNull(v.heroTitle),
+    heroLede: cleanTextOrNull(v.heroLede),
+    emptyStateText: cleanTextOrNull(v.emptyStateText),
+    manageAddTitle: cleanTextOrNull(v.manageAddTitle),
+    manageAddBlurb: cleanTextOrNull(v.manageAddBlurb),
+    manageOrderTitle: cleanTextOrNull(v.manageOrderTitle),
+    manageOrderBlurb: cleanTextOrNull(v.manageOrderBlurb),
+    manageEmptyDragText: cleanTextOrNull(v.manageEmptyDragText),
+    loginTitle: cleanTextOrNull(v.loginTitle),
+    loginLede: cleanTextOrNull(v.loginLede),
+    loginBackLabel: cleanTextOrNull(v.loginBackLabel),
     colorPrimary: fallbackText(v.colorPrimary, DEFAULT_SITE_SETTINGS.colorPrimary),
     colorPrimaryDark: fallbackText(v.colorPrimaryDark, DEFAULT_SITE_SETTINGS.colorPrimaryDark),
     colorText: fallbackText(v.colorText, DEFAULT_SITE_SETTINGS.colorText),
@@ -162,6 +161,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
     await db.execute(sql`
       insert into "site_settings" (
         "id",
+        "logo_size_px",
+        "header_layout",
         "brand_line1",
         "brand_line2",
         "header_title",
@@ -192,6 +193,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
         "updated_at"
       ) values (
         1,
+        ${settings.logoSizePx},
+        ${settings.headerLayout},
         ${settings.brandLine1},
         ${settings.brandLine2},
         ${settings.headerTitle},
@@ -222,6 +225,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
         ${settings.updatedAt}
       )
       on conflict ("id") do update set
+        "logo_size_px" = excluded."logo_size_px",
+        "header_layout" = excluded."header_layout",
         "brand_line1" = excluded."brand_line1",
         "brand_line2" = excluded."brand_line2",
         "header_title" = excluded."header_title",
@@ -257,6 +262,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
   await db.execute(sql`
     insert into "site_settings" (
       "id",
+      "logo_size_px",
+      "header_layout",
       "brand_line1",
       "brand_line2",
       "header_title",
@@ -286,6 +293,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
       "updated_at"
     ) values (
       1,
+      ${settings.logoSizePx},
+      ${settings.headerLayout},
       ${settings.brandLine1},
       ${settings.brandLine2},
       ${settings.headerTitle},
@@ -315,6 +324,8 @@ async function saveLegacySettings(settings: NormalizedSettings, supportsHeaderTi
       ${settings.updatedAt}
     )
     on conflict ("id") do update set
+      "logo_size_px" = excluded."logo_size_px",
+      "header_layout" = excluded."header_layout",
       "brand_line1" = excluded."brand_line1",
       "brand_line2" = excluded."brand_line2",
       "header_title" = excluded."header_title",
@@ -353,6 +364,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
         "id",
         "logo_url",
         "logo_alt",
+        "logo_size_px",
+        "header_layout",
         "brand_line1",
         "brand_line2",
         "header_title",
@@ -385,6 +398,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
         1,
         ${settings.logoUrl},
         ${settings.logoAlt},
+        ${settings.logoSizePx},
+        ${settings.headerLayout},
         ${settings.brandLine1},
         ${settings.brandLine2},
         ${settings.headerTitle},
@@ -417,6 +432,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
       on conflict ("id") do update set
         "logo_url" = excluded."logo_url",
         "logo_alt" = excluded."logo_alt",
+        "logo_size_px" = excluded."logo_size_px",
+        "header_layout" = excluded."header_layout",
         "brand_line1" = excluded."brand_line1",
         "brand_line2" = excluded."brand_line2",
         "header_title" = excluded."header_title",
@@ -454,6 +471,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
       "id",
       "logo_url",
       "logo_alt",
+      "logo_size_px",
+      "header_layout",
       "brand_line1",
       "brand_line2",
       "header_title",
@@ -485,6 +504,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
       1,
       ${settings.logoUrl},
       ${settings.logoAlt},
+      ${settings.logoSizePx},
+      ${settings.headerLayout},
       ${settings.brandLine1},
       ${settings.brandLine2},
       ${settings.headerTitle},
@@ -516,6 +537,8 @@ async function saveLogoSettings(settings: NormalizedSettings, supportsHeaderTitl
     on conflict ("id") do update set
       "logo_url" = excluded."logo_url",
       "logo_alt" = excluded."logo_alt",
+      "logo_size_px" = excluded."logo_size_px",
+      "header_layout" = excluded."header_layout",
       "brand_line1" = excluded."brand_line1",
       "brand_line2" = excluded."brand_line2",
       "header_title" = excluded."header_title",
@@ -552,6 +575,8 @@ export async function updateSiteSettingsAction(formData: FormData) {
   const raw = {
     logoUrl: readString(formData, "logoUrl"),
     logoAlt: readString(formData, "logoAlt"),
+    logoSizePx: readString(formData, "logoSizePx"),
+    headerLayout: readString(formData, "headerLayout"),
     brandLine1: readString(formData, "brandLine1"),
     brandLine2: readString(formData, "brandLine2"),
     headerTitle: readString(formData, "headerTitle"),
@@ -599,7 +624,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save settings right now.";
-    const missingLogoColumn = message.includes("logo_url") || message.includes("logo_alt");
+    const missingLogoColumn = message.includes("logo_url") || message.includes("logo_alt") || message.includes("logo_size_px") || message.includes("header_layout");
     const missingHeaderTitleSizeColumn = message.includes("header_title_size_px");
 
     if (missingLogoColumn || missingHeaderTitleSizeColumn) {

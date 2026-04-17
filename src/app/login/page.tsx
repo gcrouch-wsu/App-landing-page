@@ -33,6 +33,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             headerTitleSizePx={settings.headerTitleSizePx}
             logoUrl={settings.logoUrl}
             logoAlt={settings.logoAlt}
+            logoSizePx={settings.logoSizePx}
+            headerLayout={settings.headerLayout}
           />
           {settings.loginBackLabel ? (
             <Link

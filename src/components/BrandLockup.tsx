@@ -2,13 +2,15 @@
 import Link from "next/link";
 
 type BrandLockupProps = {
-  brandLine1: string;
-  brandLine2: string;
-  headerTitle: string;
+  brandLine1?: string | null;
+  brandLine2?: string | null;
+  headerTitle?: string | null;
   headerSubtitle?: string | null;
   headerTitleSizePx?: number | null;
   logoUrl?: string | null;
   logoAlt?: string | null;
+  logoSizePx?: number | null;
+  headerLayout?: string | null;
   href?: string;
   className?: string;
 };
@@ -19,21 +21,27 @@ function BrandMark({
   headerTitle,
   logoUrl,
   logoAlt,
-}: Omit<BrandLockupProps, "className" | "headerSubtitle" | "href">) {
+  logoSizePx,
+}: Omit<BrandLockupProps, "className" | "headerSubtitle" | "href" | "headerLayout">) {
   if (logoUrl) {
+    const size = logoSizePx ?? 160;
     return (
-      <div className="flex min-w-0 max-w-[9rem] items-center sm:max-w-[10.5rem] lg:max-w-[12rem]">
+      <div
+        className="flex min-w-0 items-center"
+        style={{ maxWidth: `${size}px` }}
+      >
         <img
           src={logoUrl}
-          alt={logoAlt || (headerTitle.trim() ? `${headerTitle} logo` : "Site logo")}
-          className="block max-h-14 w-auto max-w-full object-contain sm:max-h-16"
+          alt={logoAlt || (headerTitle?.trim() ? `${headerTitle} logo` : "Site logo")}
+          className="block h-auto w-auto max-w-full object-contain"
+          style={{ maxHeight: `${Math.round(size * 0.6)}px` }}
         />
       </div>
     );
   }
 
-  const line1 = brandLine1.trim();
-  const line2 = brandLine2.trim();
+  const line1 = brandLine1?.trim();
+  const line2 = brandLine2?.trim();
 
   if (!line1 && !line2) return null;
 
@@ -64,22 +72,28 @@ export function BrandLockup({
   headerTitleSizePx,
   logoUrl,
   logoAlt,
+  logoSizePx,
+  headerLayout = "side",
   href,
   className = "",
 }: BrandLockupProps) {
-  const hasMark = Boolean(logoUrl || brandLine1.trim() || brandLine2.trim());
-  const hasTitle = Boolean(headerTitle.trim());
+  const hasMark = Boolean(logoUrl || brandLine1?.trim() || brandLine2?.trim());
+  const hasTitle = Boolean(headerTitle?.trim());
   const hasSubtitle = Boolean(headerSubtitle?.trim());
 
   if (!hasMark && !hasTitle && !hasSubtitle) {
     return null;
   }
 
+  const isStacked = headerLayout === "stacked";
+
   const content = (
     <div
       className={`grid min-w-0 max-w-full gap-3 ${
         hasMark && (hasTitle || hasSubtitle)
-          ? "sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-4"
+          ? isStacked
+            ? "grid-cols-1 items-start"
+            : "sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-4"
           : ""
       } ${className}`.trim()}
     >
@@ -90,6 +104,7 @@ export function BrandLockup({
           headerTitle={headerTitle}
           logoUrl={logoUrl}
           logoAlt={logoAlt}
+          logoSizePx={logoSizePx}
         />
       ) : null}
       {hasTitle || hasSubtitle ? (
@@ -98,7 +113,7 @@ export function BrandLockup({
             <div
               className="max-w-full font-bold leading-[1.08] text-[var(--wsu-gray)] text-pretty"
               style={{
-                fontSize: `${Math.min(40, Math.max(18, headerTitleSizePx ?? 28))}px`,
+                fontSize: `${Math.min(48, Math.max(18, headerTitleSizePx ?? 28))}px`,
               }}
             >
               {headerTitle}

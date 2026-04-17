@@ -4,6 +4,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRow = {
   id: 1,
   logoUrl: null,
   logoAlt: null,
+  logoSizePx: 160,
+  headerLayout: "side",
   brandLine1: "WSU",
   brandLine2: "Grad",
   headerTitle: "Graduate School Tools",

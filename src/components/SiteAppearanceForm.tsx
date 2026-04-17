@@ -27,6 +27,62 @@ function previewValue(
   return value.trim();
 }
 
+const WSU_COLORS = [
+  { name: "Crimson", hex: "#981e32" },
+  { name: "Crimson Dark", hex: "#6d1524" },
+  { name: "Gray", hex: "#5e6a71" },
+  { name: "Gray Dark", hex: "#393939" },
+  { name: "Gray Light", hex: "#e2e2e2" },
+  { name: "Off-white", hex: "#f7f5f5" },
+  { name: "White", hex: "#ffffff" },
+];
+
+function ColorPicker({
+  name,
+  label,
+  value,
+  fallback,
+  onChange,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  fallback: string;
+  onChange: (hex: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {WSU_COLORS.map((c) => (
+          <button
+            key={c.hex}
+            type="button"
+            title={c.name}
+            onClick={() => onChange(c.hex)}
+            className={`h-6 w-6 rounded-md border border-black/10 transition hover:scale-110 ${
+              value.toLowerCase() === c.hex.toLowerCase()
+                ? "ring-2 ring-[var(--wsu-crimson)] ring-offset-1"
+                : ""
+            }`}
+            style={{ backgroundColor: c.hex }}
+          />
+        ))}
+      </div>
+      <input
+        name={name}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 font-mono text-sm"
+        placeholder={fallback}
+      />
+    </div>
+  );
+}
+
 export function SiteAppearanceForm({
   settings,
   supportsLogoStorage,
@@ -36,119 +92,44 @@ export function SiteAppearanceForm({
   const [pending, setPending] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
-  const logoUrlValue = settings.logoUrl ?? "";
-  const logoAltFallback = `${settings.headerTitle} logo`;
-  const logoAltValue =
-    settings.logoAlt && settings.logoAlt === logoAltFallback ? "" : (settings.logoAlt ?? "");
-  const brandLine1Value = blankIfDefault(settings.brandLine1, DEFAULT_SITE_SETTINGS.brandLine1);
-  const brandLine2Value = blankIfDefault(settings.brandLine2, DEFAULT_SITE_SETTINGS.brandLine2);
-  const headerTitleValue = blankIfDefault(settings.headerTitle, DEFAULT_SITE_SETTINGS.headerTitle);
-  const headerSubtitleValue = blankIfDefault(
-    settings.headerSubtitle,
-    DEFAULT_SITE_SETTINGS.headerSubtitle,
-  );
-  const heroTitleValue = blankIfDefault(settings.heroTitle, DEFAULT_SITE_SETTINGS.heroTitle);
-  const heroLedeValue = blankIfDefault(settings.heroLede, DEFAULT_SITE_SETTINGS.heroLede);
-  const emptyStateTextValue = blankIfDefault(
-    settings.emptyStateText,
-    DEFAULT_SITE_SETTINGS.emptyStateText,
-  );
-  const loginTitleValue = blankIfDefault(settings.loginTitle, DEFAULT_SITE_SETTINGS.loginTitle);
-  const loginLedeValue = blankIfDefault(settings.loginLede, DEFAULT_SITE_SETTINGS.loginLede);
-  const loginBackLabelValue = blankIfDefault(
-    settings.loginBackLabel,
-    DEFAULT_SITE_SETTINGS.loginBackLabel,
-  );
-  const manageAddTitleValue = blankIfDefault(
-    settings.manageAddTitle,
-    DEFAULT_SITE_SETTINGS.manageAddTitle,
-  );
-  const manageAddBlurbValue = blankIfDefault(
-    settings.manageAddBlurb,
-    DEFAULT_SITE_SETTINGS.manageAddBlurb,
-  );
-  const manageOrderTitleValue = blankIfDefault(
-    settings.manageOrderTitle,
-    DEFAULT_SITE_SETTINGS.manageOrderTitle,
-  );
-  const manageEmptyDragTextValue = blankIfDefault(
-    settings.manageEmptyDragText,
-    DEFAULT_SITE_SETTINGS.manageEmptyDragText,
-  );
-  const manageOrderBlurbValue = blankIfDefault(
-    settings.manageOrderBlurb,
-    DEFAULT_SITE_SETTINGS.manageOrderBlurb,
-  );
-  const colorPrimaryValue = blankIfDefault(settings.colorPrimary, DEFAULT_SITE_SETTINGS.colorPrimary);
-  const colorPrimaryDarkValue = blankIfDefault(
-    settings.colorPrimaryDark,
-    DEFAULT_SITE_SETTINGS.colorPrimaryDark,
-  );
-  const colorTextValue = blankIfDefault(settings.colorText, DEFAULT_SITE_SETTINGS.colorText);
-  const colorTextMutedValue = blankIfDefault(
-    settings.colorTextMuted,
-    DEFAULT_SITE_SETTINGS.colorTextMuted,
-  );
-  const colorBorderValue = blankIfDefault(settings.colorBorder, DEFAULT_SITE_SETTINGS.colorBorder);
-  const colorPageBgValue = blankIfDefault(settings.colorPageBg, DEFAULT_SITE_SETTINGS.colorPageBg);
-  const colorCardBgValue = blankIfDefault(settings.colorCardBg, DEFAULT_SITE_SETTINGS.colorCardBg);
-  const colorCardAccentValue = blankIfDefault(
-    settings.colorCardAccent,
-    DEFAULT_SITE_SETTINGS.colorCardAccent,
-  );
-  const colorUrlOnCardValue = blankIfDefault(
-    settings.colorUrlOnCard,
-    DEFAULT_SITE_SETTINGS.colorUrlOnCard,
-  );
-  const cardRadiusPxValue = blankIfDefault(
-    settings.cardRadiusPx,
-    DEFAULT_SITE_SETTINGS.cardRadiusPx,
-  );
-  const cardShadowValue = blankIfDefault(settings.cardShadow, DEFAULT_SITE_SETTINGS.cardShadow);
-  const headerTitleSizePxValue = blankIfDefault(
-    settings.headerTitleSizePx,
-    DEFAULT_SITE_SETTINGS.headerTitleSizePx,
-  );
 
-  const [logoUrl, setLogoUrl] = useState(logoUrlValue);
-  const [logoAlt, setLogoAlt] = useState(logoAltValue);
-  const [brandLine1, setBrandLine1] = useState(brandLine1Value);
-  const [brandLine2, setBrandLine2] = useState(brandLine2Value);
-  const [headerTitle, setHeaderTitle] = useState(headerTitleValue);
-  const [headerSubtitle, setHeaderSubtitle] = useState(headerSubtitleValue);
-  const [headerTitleSizePx, setHeaderTitleSizePx] = useState(headerTitleSizePxValue);
+  const [formValues, setFormValues] = useState({
+    logoUrl: settings.logoUrl ?? "",
+    logoAlt: settings.logoAlt ?? "",
+    logoSizePx: String(settings.logoSizePx ?? DEFAULT_SITE_SETTINGS.logoSizePx),
+    headerLayout: settings.headerLayout ?? "side",
+    brandLine1: settings.brandLine1 ?? "",
+    brandLine2: settings.brandLine2 ?? "",
+    headerTitle: settings.headerTitle ?? "",
+    headerSubtitle: settings.headerSubtitle ?? "",
+    headerTitleSizePx: String(settings.headerTitleSizePx ?? DEFAULT_SITE_SETTINGS.headerTitleSizePx),
+    heroTitle: settings.heroTitle ?? "",
+    heroLede: settings.heroLede ?? "",
+    emptyStateText: settings.emptyStateText ?? "",
+    loginTitle: settings.loginTitle ?? "",
+    loginLede: settings.loginLede ?? "",
+    loginBackLabel: settings.loginBackLabel ?? "",
+    manageAddTitle: settings.manageAddTitle ?? "",
+    manageAddBlurb: settings.manageAddBlurb ?? "",
+    manageOrderTitle: settings.manageOrderTitle ?? "",
+    manageOrderBlurb: settings.manageOrderBlurb ?? "",
+    manageEmptyDragText: settings.manageEmptyDragText ?? "",
+    colorPrimary: settings.colorPrimary ?? DEFAULT_SITE_SETTINGS.colorPrimary,
+    colorPrimaryDark: settings.colorPrimaryDark ?? DEFAULT_SITE_SETTINGS.colorPrimaryDark,
+    colorText: settings.colorText ?? DEFAULT_SITE_SETTINGS.colorText,
+    colorTextMuted: settings.colorTextMuted ?? DEFAULT_SITE_SETTINGS.colorTextMuted,
+    colorBorder: settings.colorBorder ?? DEFAULT_SITE_SETTINGS.colorBorder,
+    colorPageBg: settings.colorPageBg ?? DEFAULT_SITE_SETTINGS.colorPageBg,
+    colorCardBg: settings.colorCardBg ?? DEFAULT_SITE_SETTINGS.colorCardBg,
+    colorCardAccent: settings.colorCardAccent ?? DEFAULT_SITE_SETTINGS.colorCardAccent,
+    colorUrlOnCard: settings.colorUrlOnCard ?? DEFAULT_SITE_SETTINGS.colorUrlOnCard,
+    cardRadiusPx: String(settings.cardRadiusPx ?? DEFAULT_SITE_SETTINGS.cardRadiusPx),
+    cardShadow: settings.cardShadow ?? DEFAULT_SITE_SETTINGS.cardShadow,
+  });
 
-  function handleFieldInput(event: React.FormEvent<HTMLFormElement>) {
-    const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-    if (!target.name) return;
-
-    setTouchedFields((prev) => (prev[target.name] ? prev : { ...prev, [target.name]: true }));
-
-    switch (target.name) {
-      case "logoUrl":
-        setLogoUrl(target.value);
-        break;
-      case "logoAlt":
-        setLogoAlt(target.value);
-        break;
-      case "brandLine1":
-        setBrandLine1(target.value);
-        break;
-      case "brandLine2":
-        setBrandLine2(target.value);
-        break;
-      case "headerTitle":
-        setHeaderTitle(target.value);
-        break;
-      case "headerSubtitle":
-        setHeaderSubtitle(target.value);
-        break;
-      case "headerTitleSizePx":
-        setHeaderTitleSizePx(target.value);
-        break;
-      default:
-        break;
-    }
+  function handleFieldChange(name: string, value: string) {
+    setTouchedFields((prev) => ({ ...prev, [name]: true }));
+    setFormValues((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -157,34 +138,11 @@ export function SiteAppearanceForm({
     setPending(true);
     try {
       const fd = new FormData(e.currentTarget);
-      const preservedTextValues: Record<string, string> = {
-        logoAlt: settings.logoAlt ?? "",
-        brandLine1: settings.brandLine1,
-        brandLine2: settings.brandLine2,
-        headerTitle: settings.headerTitle,
-        headerSubtitle: settings.headerSubtitle,
-        heroTitle: settings.heroTitle,
-        heroLede: settings.heroLede,
-        emptyStateText: settings.emptyStateText,
-        loginTitle: settings.loginTitle,
-        loginLede: settings.loginLede,
-        loginBackLabel: settings.loginBackLabel,
-        manageAddTitle: settings.manageAddTitle,
-        manageAddBlurb: settings.manageAddBlurb,
-        manageOrderTitle: settings.manageOrderTitle,
-        manageOrderBlurb: settings.manageOrderBlurb,
-        manageEmptyDragText: settings.manageEmptyDragText,
-      };
-
-      for (const [name, originalValue] of Object.entries(preservedTextValues)) {
-        if (!touchedFields[name] && String(fd.get(name) ?? "") === "") {
-          fd.set(name, originalValue);
-        }
-      }
-
+      // No more auto-populating empty fields with defaults on submit!
       const res = await updateSiteSettingsAction(fd);
       if (res.ok) {
         router.refresh();
+        setBanner("Settings saved successfully.");
         return;
       }
       const parts = Object.entries(res.error)
@@ -198,30 +156,13 @@ export function SiteAppearanceForm({
     }
   }
 
-  const previewTitle = previewValue(headerTitle, touchedFields.headerTitle, settings.headerTitle);
-  const previewSubtitle = previewValue(
-    headerSubtitle,
-    touchedFields.headerSubtitle,
-    settings.headerSubtitle,
-  );
-  const previewBrandLine1 = previewValue(
-    brandLine1,
-    touchedFields.brandLine1,
-    settings.brandLine1,
-  );
-  const previewBrandLine2 = previewValue(
-    brandLine2,
-    touchedFields.brandLine2,
-    settings.brandLine2,
-  );
-  const previewLogoUrl = supportsLogoStorage ? logoUrl.trim() || null : null;
-  const previewLogoAlt = previewValue(logoAlt, touchedFields.logoAlt, settings.logoAlt);
-  const previewHeaderTitleSize =
-    touchedFields.headerTitleSizePx
-      ? (headerTitleSizePx.trim() === ""
-          ? DEFAULT_SITE_SETTINGS.headerTitleSizePx
-          : Number(headerTitleSizePx))
-      : settings.headerTitleSizePx;
+  const previewLogoUrl = supportsLogoStorage ? formValues.logoUrl.trim() || null : null;
+  const previewHeaderTitleSize = formValues.headerTitleSizePx.trim() === ""
+    ? DEFAULT_SITE_SETTINGS.headerTitleSizePx
+    : Number(formValues.headerTitleSizePx);
+  const previewLogoSize = formValues.logoSizePx.trim() === ""
+    ? DEFAULT_SITE_SETTINGS.logoSizePx
+    : Number(formValues.logoSizePx);
 
   return (
     <section className="mb-10 rounded-[18px] border border-[var(--wsu-gray-light)] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)]">
@@ -242,8 +183,12 @@ export function SiteAppearanceForm({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} onInputCapture={handleFieldInput} className="mt-6 space-y-8">
-        {banner ? <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">{banner}</p> : null}
+      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+        {banner ? (
+          <p className={`rounded-xl px-3 py-2 text-sm ${banner.includes("saved") ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+            {banner}
+          </p>
+        ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,360px)]">
           <fieldset className="space-y-4 rounded-[18px] border border-[var(--wsu-gray-light)] p-5">
@@ -255,52 +200,73 @@ export function SiteAppearanceForm({
                   Logo image URL <span className="font-normal normal-case">(optional)</span>
                   <input
                     name="logoUrl"
-                    defaultValue={logoUrlValue}
+                    value={formValues.logoUrl}
+                    onChange={(e) => handleFieldChange("logoUrl", e.target.value)}
                     inputMode="url"
                     className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                    placeholder="https://example.edu/logo.svg or /logo.png"
+                    placeholder="https://example.edu/logo.svg"
                   />
                 </label>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                    Logo size (max-width px)
+                    <input
+                      name="logoSizePx"
+                      type="number"
+                      min={40}
+                      max={400}
+                      value={formValues.logoSizePx}
+                      onChange={(e) => handleFieldChange("logoSizePx", e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                    Header Layout
+                    <select
+                      name="headerLayout"
+                      value={formValues.headerLayout}
+                      onChange={(e) => handleFieldChange("headerLayout", e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                    >
+                      <option value="side">Logo on side</option>
+                      <option value="stacked">Logo on top</option>
+                    </select>
+                  </label>
+                </div>
 
                 <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
                   Logo alt text <span className="font-normal normal-case">(optional)</span>
                   <input
                     name="logoAlt"
-                    defaultValue={logoAltValue}
+                    value={formValues.logoAlt}
+                    onChange={(e) => handleFieldChange("logoAlt", e.target.value)}
                     className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                     placeholder="Graduate School logo"
                   />
                 </label>
               </>
-            ) : (
-              <>
-                <input type="hidden" name="logoUrl" value="" />
-                <input type="hidden" name="logoAlt" value="" />
-                <div className="rounded-[16px] bg-[var(--wsu-bg)] px-4 py-3 text-sm leading-6 text-[var(--wsu-gray-mid)] ring-1 ring-black/5">
-                  Logo storage is unavailable until the database migration adds the `logo_url` and
-                  `logo_alt` columns. The rest of the page and appearance settings will still save
-                  normally.
-                </div>
-              </>
-            )}
+            ) : null}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
                 Text mark line 1
                 <input
                   name="brandLine1"
-                  defaultValue={brandLine1Value}
+                  value={formValues.brandLine1}
+                  onChange={(e) => handleFieldChange("brandLine1", e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                  placeholder={DEFAULT_SITE_SETTINGS.brandLine1}
+                  placeholder={DEFAULT_SITE_SETTINGS.brandLine1 || ""}
                 />
               </label>
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
                 Text mark line 2
                 <input
                   name="brandLine2"
-                  defaultValue={brandLine2Value}
+                  value={formValues.brandLine2}
+                  onChange={(e) => handleFieldChange("brandLine2", e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                  placeholder={DEFAULT_SITE_SETTINGS.brandLine2}
+                  placeholder={DEFAULT_SITE_SETTINGS.brandLine2 || ""}
                 />
               </label>
             </div>
@@ -309,38 +275,38 @@ export function SiteAppearanceForm({
               Site title
               <input
                 name="headerTitle"
-                defaultValue={headerTitleValue}
+                value={formValues.headerTitle}
+                onChange={(e) => handleFieldChange("headerTitle", e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.headerTitle}
+                placeholder={DEFAULT_SITE_SETTINGS.headerTitle || ""}
               />
             </label>
 
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-              Site subtitle
-              <input
-                name="headerSubtitle"
-                defaultValue={headerSubtitleValue}
-                className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.headerSubtitle}
-              />
-            </label>
-
-            {supportsHeaderTitleSize ? (
+            <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-                Site title size (px)
+                Site subtitle
+                <input
+                  name="headerSubtitle"
+                  value={formValues.headerSubtitle}
+                  onChange={(e) => handleFieldChange("headerSubtitle", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                  placeholder={DEFAULT_SITE_SETTINGS.headerSubtitle || ""}
+                />
+              </label>
+
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                Title size (px)
                 <input
                   name="headerTitleSizePx"
                   type="number"
                   min={18}
-                  max={40}
-                  defaultValue={headerTitleSizePxValue}
-                  className="mt-1 block w-32 rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                  placeholder={String(DEFAULT_SITE_SETTINGS.headerTitleSizePx)}
+                  max={48}
+                  value={formValues.headerTitleSizePx}
+                  onChange={(e) => handleFieldChange("headerTitleSizePx", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                 />
               </label>
-            ) : (
-              <input type="hidden" name="headerTitleSizePx" value="" />
-            )}
+            </div>
           </fieldset>
 
           <aside className="rounded-[18px] bg-[var(--wsu-bg)] p-5 ring-1 ring-black/5">
@@ -349,22 +315,19 @@ export function SiteAppearanceForm({
             </p>
             <div className="mt-4 rounded-[18px] border border-[var(--wsu-gray-light)] bg-white p-4">
               <BrandLockup
-                brandLine1={previewBrandLine1}
-                brandLine2={previewBrandLine2}
-                headerTitle={previewTitle}
-                headerSubtitle={previewSubtitle}
+                brandLine1={formValues.brandLine1 || DEFAULT_SITE_SETTINGS.brandLine1}
+                brandLine2={formValues.brandLine2 || DEFAULT_SITE_SETTINGS.brandLine2}
+                headerTitle={formValues.headerTitle || DEFAULT_SITE_SETTINGS.headerTitle}
+                headerSubtitle={formValues.headerSubtitle || DEFAULT_SITE_SETTINGS.headerSubtitle}
                 headerTitleSizePx={previewHeaderTitleSize}
                 logoUrl={previewLogoUrl}
-                logoAlt={previewLogoAlt}
+                logoAlt={formValues.logoAlt}
+                logoSizePx={previewLogoSize}
+                headerLayout={formValues.headerLayout}
               />
             </div>
-            <p className="mt-4 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-              {supportsLogoStorage
-                ? "Wide or tall logos scale naturally without a surrounding box. If you leave the logo URL blank, the header uses the text mark instead."
-                : "The preview shows the text mark layout that will be used until logo storage is enabled in the database."}
-              {!supportsHeaderTitleSize
-                ? " Title size uses the built-in default until the database migration adds header_title_size_px."
-                : ""}
+            <p className="mt-4 text-xs leading-5 text-[var(--wsu-gray-mid)]">
+              Previews use built-in defaults if fields are empty. On the actual site, empty fields will be hidden.
             </p>
           </aside>
         </div>
@@ -377,9 +340,10 @@ export function SiteAppearanceForm({
               Section heading
               <input
                 name="heroTitle"
-                defaultValue={heroTitleValue}
+                value={formValues.heroTitle}
+                onChange={(e) => handleFieldChange("heroTitle", e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.heroTitle}
+                placeholder={DEFAULT_SITE_SETTINGS.heroTitle || ""}
               />
             </label>
 
@@ -388,9 +352,10 @@ export function SiteAppearanceForm({
               <textarea
                 name="heroLede"
                 rows={4}
-                defaultValue={heroLedeValue}
+                value={formValues.heroLede}
+                onChange={(e) => handleFieldChange("heroLede", e.target.value)}
                 className="mt-1 w-full resize-y rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.heroLede}
+                placeholder={DEFAULT_SITE_SETTINGS.heroLede || ""}
               />
             </label>
 
@@ -399,9 +364,10 @@ export function SiteAppearanceForm({
               <textarea
                 name="emptyStateText"
                 rows={3}
-                defaultValue={emptyStateTextValue}
+                value={formValues.emptyStateText}
+                onChange={(e) => handleFieldChange("emptyStateText", e.target.value)}
                 className="mt-1 w-full resize-y rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.emptyStateText}
+                placeholder={DEFAULT_SITE_SETTINGS.emptyStateText || ""}
               />
             </label>
           </fieldset>
@@ -413,9 +379,10 @@ export function SiteAppearanceForm({
               Page title
               <input
                 name="loginTitle"
-                defaultValue={loginTitleValue}
+                value={formValues.loginTitle}
+                onChange={(e) => handleFieldChange("loginTitle", e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.loginTitle}
+                placeholder={DEFAULT_SITE_SETTINGS.loginTitle || ""}
               />
             </label>
 
@@ -424,9 +391,10 @@ export function SiteAppearanceForm({
               <textarea
                 name="loginLede"
                 rows={4}
-                defaultValue={loginLedeValue}
+                value={formValues.loginLede}
+                onChange={(e) => handleFieldChange("loginLede", e.target.value)}
                 className="mt-1 w-full resize-y rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.loginLede}
+                placeholder={DEFAULT_SITE_SETTINGS.loginLede || ""}
               />
             </label>
 
@@ -434,128 +402,82 @@ export function SiteAppearanceForm({
               Back link label
               <input
                 name="loginBackLabel"
-                defaultValue={loginBackLabelValue}
+                value={formValues.loginBackLabel}
+                onChange={(e) => handleFieldChange("loginBackLabel", e.target.value)}
                 className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.loginBackLabel}
+                placeholder={DEFAULT_SITE_SETTINGS.loginBackLabel || ""}
               />
             </label>
           </fieldset>
         </div>
 
         <fieldset className="space-y-4 rounded-[18px] border border-[var(--wsu-gray-light)] p-5">
-          <legend className="px-2 text-sm font-semibold text-[var(--wsu-gray)]">Manage page</legend>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)] lg:col-span-2">
-              Add application title
-              <input
-                name="manageAddTitle"
-                defaultValue={manageAddTitleValue}
-                className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.manageAddTitle}
-              />
-            </label>
-
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)] lg:col-span-2">
-              Add application blurb
-              <textarea
-                name="manageAddBlurb"
-                rows={4}
-                defaultValue={manageAddBlurbValue}
-                className="mt-1 w-full resize-y rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.manageAddBlurb}
-              />
-            </label>
-
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-              Card order title
-              <input
-                name="manageOrderTitle"
-                defaultValue={manageOrderTitleValue}
-                className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.manageOrderTitle}
-              />
-            </label>
-
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-              Empty drag message
-              <input
-                name="manageEmptyDragText"
-                defaultValue={manageEmptyDragTextValue}
-                className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.manageEmptyDragText}
-              />
-            </label>
-
-            <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)] lg:col-span-2">
-              Card order blurb
-              <textarea
-                name="manageOrderBlurb"
-                rows={3}
-                defaultValue={manageOrderBlurbValue}
-                className="mt-1 w-full resize-y rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={DEFAULT_SITE_SETTINGS.manageOrderBlurb}
-              />
-            </label>
-          </div>
-        </fieldset>
-
-        <fieldset className="space-y-4 rounded-[18px] border border-[var(--wsu-gray-light)] p-5">
           <legend className="px-2 text-sm font-semibold text-[var(--wsu-gray)]">Colors</legend>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {(
-              [
-                ["colorPrimary", "Primary", colorPrimaryValue, DEFAULT_SITE_SETTINGS.colorPrimary],
-                [
-                  "colorPrimaryDark",
-                  "Primary hover",
-                  colorPrimaryDarkValue,
-                  DEFAULT_SITE_SETTINGS.colorPrimaryDark,
-                ],
-                ["colorText", "Main text", colorTextValue, DEFAULT_SITE_SETTINGS.colorText],
-                [
-                  "colorTextMuted",
-                  "Muted text",
-                  colorTextMutedValue,
-                  DEFAULT_SITE_SETTINGS.colorTextMuted,
-                ],
-                ["colorBorder", "Borders", colorBorderValue, DEFAULT_SITE_SETTINGS.colorBorder],
-                [
-                  "colorPageBg",
-                  "Page background",
-                  colorPageBgValue,
-                  DEFAULT_SITE_SETTINGS.colorPageBg,
-                ],
-                ["colorCardBg", "Card background", colorCardBgValue, DEFAULT_SITE_SETTINGS.colorCardBg],
-                [
-                  "colorCardAccent",
-                  "Card top stripe",
-                  colorCardAccentValue,
-                  DEFAULT_SITE_SETTINGS.colorCardAccent,
-                ],
-                [
-                  "colorUrlOnCard",
-                  "Card URL text",
-                  colorUrlOnCardValue,
-                  DEFAULT_SITE_SETTINGS.colorUrlOnCard,
-                ],
-              ] as const
-            ).map(([name, label, value, fallback]) => (
-              <label
-                key={name}
-                className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
-              >
-                {label}
-                <input
-                  name={name}
-                  type="text"
-                  defaultValue={value}
-                  className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 font-mono text-sm"
-                  placeholder={fallback}
-                />
-              </label>
-            ))}
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ColorPicker
+              name="colorPrimary"
+              label="Primary Crimson"
+              value={formValues.colorPrimary}
+              fallback={DEFAULT_SITE_SETTINGS.colorPrimary}
+              onChange={(hex) => handleFieldChange("colorPrimary", hex)}
+            />
+            <ColorPicker
+              name="colorPrimaryDark"
+              label="Primary Hover"
+              value={formValues.colorPrimaryDark}
+              fallback={DEFAULT_SITE_SETTINGS.colorPrimaryDark}
+              onChange={(hex) => handleFieldChange("colorPrimaryDark", hex)}
+            />
+            <ColorPicker
+              name="colorText"
+              label="Main Text"
+              value={formValues.colorText}
+              fallback={DEFAULT_SITE_SETTINGS.colorText}
+              onChange={(hex) => handleFieldChange("colorText", hex)}
+            />
+            <ColorPicker
+              name="colorTextMuted"
+              label="Muted Text"
+              value={formValues.colorTextMuted}
+              fallback={DEFAULT_SITE_SETTINGS.colorTextMuted}
+              onChange={(hex) => handleFieldChange("colorTextMuted", hex)}
+            />
+            <ColorPicker
+              name="colorBorder"
+              label="Borders"
+              value={formValues.colorBorder}
+              fallback={DEFAULT_SITE_SETTINGS.colorBorder}
+              onChange={(hex) => handleFieldChange("colorBorder", hex)}
+            />
+            <ColorPicker
+              name="colorPageBg"
+              label="Page Background"
+              value={formValues.colorPageBg}
+              fallback={DEFAULT_SITE_SETTINGS.colorPageBg}
+              onChange={(hex) => handleFieldChange("colorPageBg", hex)}
+            />
+            <ColorPicker
+              name="colorCardBg"
+              label="Card Background"
+              value={formValues.colorCardBg}
+              fallback={DEFAULT_SITE_SETTINGS.colorCardBg}
+              onChange={(hex) => handleFieldChange("colorCardBg", hex)}
+            />
+            <ColorPicker
+              name="colorCardAccent"
+              label="Card Stripe"
+              value={formValues.colorCardAccent}
+              fallback={DEFAULT_SITE_SETTINGS.colorCardAccent}
+              onChange={(hex) => handleFieldChange("colorCardAccent", hex)}
+            />
+            <ColorPicker
+              name="colorUrlOnCard"
+              label="Card URL"
+              value={formValues.colorUrlOnCard}
+              fallback={DEFAULT_SITE_SETTINGS.colorUrlOnCard}
+              onChange={(hex) => handleFieldChange("colorUrlOnCard", hex)}
+            />
           </div>
         </fieldset>
 
@@ -570,9 +492,9 @@ export function SiteAppearanceForm({
                 type="number"
                 min={4}
                 max={32}
-                defaultValue={cardRadiusPxValue}
+                value={formValues.cardRadiusPx}
+                onChange={(e) => handleFieldChange("cardRadiusPx", e.target.value)}
                 className="mt-1 block w-32 rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
-                placeholder={String(DEFAULT_SITE_SETTINGS.cardRadiusPx)}
               />
             </label>
 
@@ -580,10 +502,10 @@ export function SiteAppearanceForm({
               Shadow
               <select
                 name="cardShadow"
-                defaultValue={cardShadowValue}
+                value={formValues.cardShadow}
+                onChange={(e) => handleFieldChange("cardShadow", e.target.value)}
                 className="mt-1 block rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
               >
-                <option value="">Use default (medium)</option>
                 <option value="none">None</option>
                 <option value="sm">Small</option>
                 <option value="md">Medium</option>
@@ -595,7 +517,7 @@ export function SiteAppearanceForm({
 
         <div className="flex flex-col gap-3 rounded-[18px] bg-[var(--wsu-bg)] px-4 py-4 ring-1 ring-black/5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm leading-6 text-[var(--wsu-gray-mid)]">
-            Text fields can be left blank. Color and card settings revert to defaults if blank.
+            Clear any text field to hide it on the site. Colors and radius fall back to defaults if blank.
           </p>
           <button
             type="submit"
@@ -609,3 +531,4 @@ export function SiteAppearanceForm({
     </section>
   );
 }
+
