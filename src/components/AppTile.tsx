@@ -20,7 +20,6 @@ export function AppTile({ app, href, className = "" }: TileProps) {
         style={{
           padding: "var(--wsu-card-padding,20px)",
           paddingTop: "calc(var(--wsu-card-padding,20px) - 4px)",
-          fontFamily: "var(--wsu-card-font-family,var(--font-montserrat),system-ui,sans-serif)",
         }}
       >
         <div>
@@ -59,6 +58,7 @@ export function AppTile({ app, href, className = "" }: TileProps) {
   const shellStyle = {
     boxShadow: "var(--wsu-card-shadow,0 4px 14px rgba(0,0,0,0.08))",
     borderColor: "var(--wsu-card-border,var(--wsu-gray-light))",
+    fontFamily: "var(--wsu-card-font-family)",
   };
 
   if (href) {

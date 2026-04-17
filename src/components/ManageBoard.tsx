@@ -23,6 +23,7 @@ import {
   createAppAction,
   deleteAppAction,
   reorderAppsAction,
+  updateAppAction,
 } from "@/app/actions/apps";
 import { AppTile } from "@/components/AppTile";
 import { CardStyleForm } from "@/components/CardStyleForm";
@@ -46,6 +47,8 @@ function pickHeaderDisplaySettings(settings: SiteSettingsRow): HeaderDisplaySett
     headerTitleSizePx: settings.headerTitleSizePx,
     headerTextPaddingTopPx: settings.headerTextPaddingTopPx,
     headerTextPaddingBottomPx: settings.headerTextPaddingBottomPx,
+    headerTextPaddingLeftPx: settings.headerTextPaddingLeftPx,
+    headerTextPaddingRightPx: settings.headerTextPaddingRightPx,
     headerTitleSubtitleGapPx: settings.headerTitleSubtitleGapPx,
     logoUrl: settings.logoUrl,
     logoAlt: settings.logoAlt,
@@ -106,10 +109,14 @@ function previewAppsForStyling(items: AppCard[]): AppCard[] {
 
 function SortableRow({
   app,
+  editing,
+  onEdit,
   onRemove,
   removing,
 }: {
   app: AppCard;
+  editing: boolean;
+  onEdit: (app: AppCard) => void;
   onRemove: (id: string) => void;
   removing: boolean;
 }) {
@@ -124,7 +131,13 @@ function SortableRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex gap-2">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex gap-2 rounded-[18px] p-2 ${
+        editing ? "bg-[var(--wsu-bg)] ring-1 ring-[var(--wsu-crimson)]/20" : ""
+      }`}
+    >
       <button
         type="button"
         className="mt-2 flex h-10 w-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg border border-dashed border-[var(--wsu-gray-light)] bg-white text-[var(--wsu-gray-mid)] hover:bg-[var(--wsu-bg)] active:cursor-grabbing"
@@ -137,6 +150,17 @@ function SortableRow({
       <div className="min-w-0 flex-1">
         <AppTile app={app} />
       </div>
+      <button
+        type="button"
+        onClick={() => onEdit(app)}
+        className={`mt-2 h-10 shrink-0 rounded-lg border px-3 text-sm font-semibold transition ${
+          editing
+            ? "border-[var(--wsu-crimson)] bg-[var(--wsu-crimson)] text-white hover:bg-[var(--wsu-crimson-dark)]"
+            : "border-[var(--wsu-gray-light)] text-[var(--wsu-gray)] hover:bg-[var(--wsu-bg)]"
+        }`}
+      >
+        {editing ? "Editing" : "Edit"}
+      </button>
       <button
         type="button"
         disabled={removing}
@@ -199,6 +223,17 @@ export function ManageBoard({
   const [formPending, setFormPending] = useState(false);
   const [listPending, startListTransition] = useTransition();
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState({
+    title: "",
+    url: "",
+    description: "",
+  });
+  const [editPending, setEditPending] = useState(false);
+  const [editFieldErrors, setEditFieldErrors] = useState<Record<string, string[] | undefined>>(
+    {},
+  );
+  const [editBanner, setEditBanner] = useState<string | null>(null);
   const [liveSettings, setLiveSettings] = useState<SiteSettingsRow>(settings);
 
   const sensors = useSensors(
@@ -215,6 +250,10 @@ export function ManageBoard({
     [],
   );
   const previewApps = useMemo(() => previewAppsForStyling(items), [items]);
+  const editingApp = useMemo(
+    () => (editingId ? items.find((app) => app.id === editingId) ?? null : null),
+    [editingId, items],
+  );
   const orderPanelTitle =
     settings.manageOrderTitle === "Card order"
       ? "Card order and styling"
@@ -223,6 +262,17 @@ export function ManageBoard({
   const syncFromServer = useCallback(() => {
     router.refresh();
   }, [router]);
+
+  const beginEdit = useCallback((app: AppCard) => {
+    setEditBanner(null);
+    setEditFieldErrors({});
+    setEditingId(app.id);
+    setEditValues({
+      title: app.title,
+      url: app.url,
+      description: app.description ?? "",
+    });
+  }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -266,9 +316,49 @@ export function ManageBoard({
       await deleteAppAction(id);
       setItems((prev) => prev.filter((app) => app.id !== id));
       setRemovingId(null);
+      if (editingId === id) {
+        setEditingId(null);
+        setEditValues({ title: "", url: "", description: "" });
+        setEditFieldErrors({});
+        setEditBanner(null);
+      }
       syncFromServer();
     });
   };
+
+  async function handleEditSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingId) return;
+    setEditBanner(null);
+    setEditFieldErrors({});
+    setEditPending(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const res = await updateAppAction(formData);
+      if (!res.ok) {
+        const first =
+          res.error.title?.[0] ??
+          res.error.url?.[0] ??
+          res.error.description?.[0] ??
+          res.error.id?.[0] ??
+          "Could not save";
+        setEditFieldErrors(res.error);
+        setEditBanner(typeof first === "string" ? first : "Could not save");
+        return;
+      }
+
+      setItems((prev) => prev.map((app) => (app.id === res.app.id ? res.app : app)));
+      setEditValues({
+        title: res.app.title,
+        url: res.app.url,
+        description: res.app.description ?? "",
+      });
+      setEditBanner("Card saved successfully.");
+      syncFromServer();
+    } finally {
+      setEditPending(false);
+    }
+  }
 
   const dataSignature = initialApps
     .map((app) => `${app.id}|${app.sortOrder}|${app.title}|${app.url}|${app.description ?? ""}`)
@@ -281,6 +371,17 @@ export function ManageBoard({
   useEffect(() => {
     setLiveSettings(settings);
   }, [settings]);
+
+  useEffect(() => {
+    if (!editingId) return;
+    const current = items.find((app) => app.id === editingId);
+    if (!current) {
+      setEditingId(null);
+      setEditValues({ title: "", url: "", description: "" });
+      setEditFieldErrors({});
+      setEditBanner(null);
+    }
+  }, [editingId, items]);
 
   return (
     <>
@@ -428,7 +529,8 @@ export function ManageBoard({
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
                   This uses the same `AppTile` component as the public landing page, including
-                  the linked card footer.
+                  the linked card footer. The public page still renders as 1 column on small
+                  screens, 2 on medium, and 3 on extra-large screens.
                 </p>
               </div>
 
@@ -447,54 +549,193 @@ export function ManageBoard({
               }
             />
 
-            <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                {orderPanelTitle ? (
-                  <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">
-                    {orderPanelTitle}
-                  </h2>
-                ) : null}
-                {settings.manageOrderBlurb ? (
-                  <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
-                    {settings.manageOrderBlurb}
+            <section className="rounded-[18px] border border-[var(--wsu-gray-light)] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="max-w-2xl">
+                  <h3 className="text-lg font-bold text-[var(--wsu-gray)]">Edit existing cards</h3>
+                  <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
+                    Choose a card from the drag-and-drop list below to edit its title, URL, or
+                    description. Reordering is still handled separately in that same list.
                   </p>
+                </div>
+                {editingApp ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditValues({ title: "", url: "", description: "" });
+                      setEditFieldErrors({});
+                      setEditBanner(null);
+                    }}
+                    className="rounded-full border border-[var(--wsu-gray-light)] px-4 py-2 text-sm font-semibold text-[var(--wsu-gray)] transition hover:bg-[var(--wsu-bg)]"
+                  >
+                    Close editor
+                  </button>
                 ) : null}
               </div>
-              <div className="rounded-full bg-[var(--wsu-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-                {items.length} card{items.length === 1 ? "" : "s"}
-              </div>
-            </div>
 
-            <div className="min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
-              {items.length === 0 ? (
-                settings.manageEmptyDragText ? (
-                  <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
-                    {settings.manageEmptyDragText}
-                  </p>
-                ) : null
+              {editingApp ? (
+                <form onSubmit={handleEditSubmit} className="mt-6 space-y-4">
+                  <input type="hidden" name="id" value={editingApp.id} />
+
+                  {editBanner ? (
+                    <p
+                      className={`rounded-xl px-3 py-2 text-sm ${
+                        editBanner.includes("saved")
+                          ? "bg-green-50 text-green-800"
+                          : "bg-red-50 text-red-800"
+                      }`}
+                    >
+                      {editBanner}
+                    </p>
+                  ) : null}
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="edit-title"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+                      >
+                        Title
+                      </label>
+                      <input
+                        id="edit-title"
+                        name="title"
+                        value={editValues.title}
+                        onChange={(e) =>
+                          setEditValues((prev) => ({ ...prev, title: e.target.value }))
+                        }
+                        className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                      />
+                      {editFieldErrors.title?.length ? (
+                        <p className="mt-1 text-xs text-red-600">{editFieldErrors.title[0]}</p>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="edit-url"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+                      >
+                        URL
+                      </label>
+                      <input
+                        id="edit-url"
+                        name="url"
+                        value={editValues.url}
+                        onChange={(e) =>
+                          setEditValues((prev) => ({ ...prev, url: e.target.value }))
+                        }
+                        className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                      />
+                      {editFieldErrors.url?.length ? (
+                        <p className="mt-1 text-xs text-red-600">{editFieldErrors.url[0]}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="edit-description"
+                      className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+                    >
+                      Description{" "}
+                      <span className="font-normal normal-case text-[var(--wsu-gray-mid)]">
+                        (optional)
+                      </span>
+                    </label>
+                    <textarea
+                      id="edit-description"
+                      name="description"
+                      rows={4}
+                      value={editValues.description}
+                      onChange={(e) =>
+                        setEditValues((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      className="w-full resize-y rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                    />
+                    {editFieldErrors.description?.length ? (
+                      <p className="mt-1 text-xs text-red-600">
+                        {editFieldErrors.description[0]}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="submit"
+                      disabled={editPending}
+                      className="rounded-full bg-[var(--wsu-crimson)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--wsu-crimson-dark)] disabled:opacity-60"
+                    >
+                      {editPending ? "Saving..." : "Save card changes"}
+                    </button>
+                    <span className="text-sm text-[var(--wsu-gray-mid)]">
+                      Editing <span className="font-semibold text-[var(--wsu-gray)]">{editingApp.title}</span>
+                    </span>
+                  </div>
+                </form>
               ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                    <ul className="m-0 flex list-none flex-col gap-3 p-0">
-                      {items.map((app) => (
-                        <li key={app.id}>
-                          <SortableRow
-                            app={app}
-                            onRemove={handleRemove}
-                            removing={removingId === app.id && listPending}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </SortableContext>
-                </DndContext>
+                <p className="mt-6 rounded-[16px] bg-[var(--wsu-bg)] px-4 py-4 text-sm leading-6 text-[var(--wsu-gray-mid)] ring-1 ring-black/5">
+                  Click <span className="font-semibold text-[var(--wsu-gray)]">Edit</span> on any
+                  card in the list below to open the existing card editor.
+                </p>
               )}
-            </div>
+            </section>
+
+            <div className="rounded-[18px] bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] ring-1 ring-black/5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  {orderPanelTitle ? (
+                    <h2 className="mb-2 text-xl font-bold text-[var(--wsu-gray)]">
+                      {orderPanelTitle}
+                    </h2>
+                  ) : null}
+                  {settings.manageOrderBlurb ? (
+                    <p className="mb-3 whitespace-pre-wrap text-sm text-[var(--wsu-gray-mid)]">
+                      {settings.manageOrderBlurb}
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-[var(--wsu-gray-mid)]">
+                    Drag the handle to reorder cards. This still controls the live public page
+                    order.
+                  </p>
+                </div>
+                <div className="rounded-full bg-[var(--wsu-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                  {items.length} card{items.length === 1 ? "" : "s"}
+                </div>
+              </div>
+
+              <div className="mt-4 min-h-[200px] rounded-[12px] border-2 border-dashed border-[var(--wsu-gray-mid)]/35 bg-[var(--wsu-bg)]/80 p-4">
+                {items.length === 0 ? (
+                  settings.manageEmptyDragText ? (
+                    <p className="py-8 text-center text-sm text-[var(--wsu-gray-mid)]">
+                      {settings.manageEmptyDragText}
+                    </p>
+                  ) : null
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                        {items.map((app) => (
+                          <li key={app.id}>
+                            <SortableRow
+                              app={app}
+                              editing={editingId === app.id}
+                              onEdit={beginEdit}
+                              onRemove={handleRemove}
+                              removing={removingId === app.id && listPending}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </div>
             </div>
           </div>
         </section>

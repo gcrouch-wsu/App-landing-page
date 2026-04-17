@@ -45,6 +45,14 @@ function normalizeSettingsRow(
       row.headerTextPaddingBottomPx,
       DEFAULT_SITE_SETTINGS.headerTextPaddingBottomPx,
     ),
+    headerTextPaddingLeftPx: readNumber(
+      row.headerTextPaddingLeftPx,
+      DEFAULT_SITE_SETTINGS.headerTextPaddingLeftPx,
+    ),
+    headerTextPaddingRightPx: readNumber(
+      row.headerTextPaddingRightPx,
+      DEFAULT_SITE_SETTINGS.headerTextPaddingRightPx,
+    ),
     headerTitleSubtitleGapPx: readNumber(
       row.headerTitleSubtitleGapPx,
       DEFAULT_SITE_SETTINGS.headerTitleSubtitleGapPx,
@@ -122,7 +130,8 @@ async function querySiteSettings(): Promise<SiteSettingsRow | null> {
       "logo_url", "logo_alt", "logo_size_px", "header_layout", "header_placement",
       "brand_line1", "brand_line2", "header_title", "header_subtitle",
       "header_title_size_px", "header_text_padding_top_px",
-      "header_text_padding_bottom_px", "header_title_subtitle_gap_px", "hero_title",
+      "header_text_padding_bottom_px", "header_text_padding_left_px",
+      "header_text_padding_right_px", "header_title_subtitle_gap_px", "hero_title",
       "hero_lede", "empty_state_text", "manage_add_title", "manage_add_blurb",
       "manage_order_title", "manage_order_blurb", "manage_empty_drag_text",
       "login_title", "login_lede", "login_back_label", "color_primary",

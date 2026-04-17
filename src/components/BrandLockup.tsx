@@ -9,6 +9,8 @@ type BrandLockupProps = {
   headerTitleSizePx?: number | null;
   headerTextPaddingTopPx?: number | null;
   headerTextPaddingBottomPx?: number | null;
+  headerTextPaddingLeftPx?: number | null;
+  headerTextPaddingRightPx?: number | null;
   headerTitleSubtitleGapPx?: number | null;
   logoUrl?: string | null;
   logoAlt?: string | null;
@@ -76,6 +78,8 @@ export function BrandLockup({
   headerTitleSizePx,
   headerTextPaddingTopPx,
   headerTextPaddingBottomPx,
+  headerTextPaddingLeftPx,
+  headerTextPaddingRightPx,
   headerTitleSubtitleGapPx,
   logoUrl,
   logoAlt,
@@ -122,6 +126,8 @@ export function BrandLockup({
           style={{
             paddingTop: `${Math.min(48, Math.max(0, headerTextPaddingTopPx ?? 0))}px`,
             paddingBottom: `${Math.min(48, Math.max(0, headerTextPaddingBottomPx ?? 0))}px`,
+            paddingLeft: `${Math.min(64, Math.max(0, headerTextPaddingLeftPx ?? 0))}px`,
+            paddingRight: `${Math.min(64, Math.max(0, headerTextPaddingRightPx ?? 0))}px`,
           }}
         >
           {hasTitle ? (

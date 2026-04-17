@@ -8,6 +8,7 @@
   --wsu-gray-light: #e2e2e2;
   --wsu-white: #ffffff;
   --wsu-bg: #f7f5f5;
+  --wsu-card-font-family: var(--font-montserrat), system-ui, sans-serif;
 }
 
 body {

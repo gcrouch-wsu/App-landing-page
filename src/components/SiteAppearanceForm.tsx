@@ -18,6 +18,8 @@ type Props = {
     | "headerTitleSizePx"
     | "headerTextPaddingTopPx"
     | "headerTextPaddingBottomPx"
+    | "headerTextPaddingLeftPx"
+    | "headerTextPaddingRightPx"
     | "headerTitleSubtitleGapPx"
     | "logoUrl"
     | "logoAlt"
@@ -156,6 +158,12 @@ export function SiteAppearanceForm({
     headerTextPaddingBottomPx: String(
       settings.headerTextPaddingBottomPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingBottomPx,
     ),
+    headerTextPaddingLeftPx: String(
+      settings.headerTextPaddingLeftPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingLeftPx,
+    ),
+    headerTextPaddingRightPx: String(
+      settings.headerTextPaddingRightPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingRightPx,
+    ),
     headerTitleSubtitleGapPx: String(
       settings.headerTitleSubtitleGapPx ?? DEFAULT_SITE_SETTINGS.headerTitleSubtitleGapPx,
     ),
@@ -196,6 +204,14 @@ export function SiteAppearanceForm({
         values.headerTextPaddingBottomPx.trim() === ""
           ? DEFAULT_SITE_SETTINGS.headerTextPaddingBottomPx
           : Number(values.headerTextPaddingBottomPx),
+      headerTextPaddingLeftPx:
+        values.headerTextPaddingLeftPx.trim() === ""
+          ? DEFAULT_SITE_SETTINGS.headerTextPaddingLeftPx
+          : Number(values.headerTextPaddingLeftPx),
+      headerTextPaddingRightPx:
+        values.headerTextPaddingRightPx.trim() === ""
+          ? DEFAULT_SITE_SETTINGS.headerTextPaddingRightPx
+          : Number(values.headerTextPaddingRightPx),
       headerTitleSubtitleGapPx:
         values.headerTitleSubtitleGapPx.trim() === ""
           ? DEFAULT_SITE_SETTINGS.headerTitleSubtitleGapPx
@@ -461,7 +477,7 @@ export function SiteAppearanceForm({
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
                 Title top padding (px)
                 <input
@@ -483,6 +499,30 @@ export function SiteAppearanceForm({
                   max={48}
                   value={formValues.headerTextPaddingBottomPx}
                   onChange={(e) => handleFieldChange("headerTextPaddingBottomPx", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                Title left padding (px)
+                <input
+                  name="headerTextPaddingLeftPx"
+                  type="number"
+                  min={0}
+                  max={64}
+                  value={formValues.headerTextPaddingLeftPx}
+                  onChange={(e) => handleFieldChange("headerTextPaddingLeftPx", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
+                Title right padding (px)
+                <input
+                  name="headerTextPaddingRightPx"
+                  type="number"
+                  min={0}
+                  max={64}
+                  value={formValues.headerTextPaddingRightPx}
+                  onChange={(e) => handleFieldChange("headerTextPaddingRightPx", e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[var(--wsu-gray-light)] px-3 py-2.5 text-sm"
                 />
               </label>

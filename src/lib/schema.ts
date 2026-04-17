@@ -34,6 +34,8 @@ export const siteSettings = pgTable("site_settings", {
   headerTitleSizePx: integer("header_title_size_px"),
   headerTextPaddingTopPx: integer("header_text_padding_top_px").notNull().default(0),
   headerTextPaddingBottomPx: integer("header_text_padding_bottom_px").notNull().default(0),
+  headerTextPaddingLeftPx: integer("header_text_padding_left_px").notNull().default(0),
+  headerTextPaddingRightPx: integer("header_text_padding_right_px").notNull().default(0),
   headerTitleSubtitleGapPx: integer("header_title_subtitle_gap_px").notNull().default(4),
   heroTitle: text("hero_title"),
   heroLede: text("hero_lede"),

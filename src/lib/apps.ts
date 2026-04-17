@@ -33,6 +33,25 @@ export async function insertApp(input: {
   return row;
 }
 
+export async function updateApp(input: {
+  id: string;
+  title: string;
+  url: string;
+  description: string | null;
+}) {
+  const db = getDb();
+  const [row] = await db
+    .update(appCards)
+    .set({
+      title: input.title,
+      url: input.url,
+      description: input.description,
+    })
+    .where(eq(appCards.id, input.id))
+    .returning();
+  return row;
+}
+
 export async function deleteApp(id: string) {
   const db = getDb();
   await db.delete(appCards).where(eq(appCards.id, id));

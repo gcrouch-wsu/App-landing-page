@@ -42,7 +42,7 @@ function cardShadowValue(key: string): string {
   }
 }
 
-function cardFontFamilyValue(key: string): string {
+export function resolveCardFontFamily(key: string): string {
   switch (key) {
     case "ibm-plex-sans":
       return "var(--font-ibm-plex-sans), system-ui, sans-serif";
@@ -78,7 +78,7 @@ export function buildSiteThemeCss(settings: ThemeSettings): string {
   --wsu-card-title: ${settings.colorCardTitle};
   --wsu-card-description: ${settings.colorCardDescription};
   --wsu-url-on-card: ${settings.colorUrlOnCard};
-  --wsu-card-font-family: ${cardFontFamilyValue(settings.cardFontFamily)};
+  --wsu-card-font-family: ${resolveCardFontFamily(settings.cardFontFamily)};
   --wsu-card-title-size: ${titleSize}px;
   --wsu-card-url-size: ${urlSize}px;
   --wsu-card-description-size: ${descriptionSize}px;

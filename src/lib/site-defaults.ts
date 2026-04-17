@@ -14,6 +14,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRow = {
   headerTitleSizePx: 28,
   headerTextPaddingTopPx: 0,
   headerTextPaddingBottomPx: 0,
+  headerTextPaddingLeftPx: 0,
+  headerTextPaddingRightPx: 0,
   headerTitleSubtitleGapPx: 4,
   heroTitle: "Applications",
   heroLede:

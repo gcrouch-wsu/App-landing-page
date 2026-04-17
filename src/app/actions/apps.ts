@@ -8,6 +8,7 @@ import {
   deleteApp,
   getMaxSortOrder,
   insertApp,
+  updateApp,
   updateSortOrders,
 } from "@/lib/apps";
 
@@ -67,6 +68,36 @@ export async function deleteAppAction(id: string) {
   revalidatePath("/");
   revalidatePath("/manage");
   return { ok: true as const };
+}
+
+export async function updateAppAction(formData: FormData) {
+  await requireSession();
+  const parsed = z
+    .object({
+      id: z.string().uuid("Invalid id"),
+    })
+    .and(appInput)
+    .safeParse({
+      id: formData.get("id"),
+      title: formData.get("title"),
+      url: formData.get("url"),
+      description: formData.get("description") ?? undefined,
+    });
+
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+  }
+
+  const app = await updateApp({
+    id: parsed.data.id,
+    title: parsed.data.title,
+    url: parsed.data.url,
+    description: parsed.data.description ?? null,
+  });
+
+  revalidatePath("/");
+  revalidatePath("/manage");
+  return { ok: true as const, app };
 }
 
 export async function reorderAppsAction(orderedIds: string[]) {

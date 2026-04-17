@@ -14,6 +14,12 @@ ALTER TABLE "site_settings"
 ADD COLUMN IF NOT EXISTS "header_text_padding_bottom_px" integer;
 
 ALTER TABLE "site_settings"
+ADD COLUMN IF NOT EXISTS "header_text_padding_left_px" integer;
+
+ALTER TABLE "site_settings"
+ADD COLUMN IF NOT EXISTS "header_text_padding_right_px" integer;
+
+ALTER TABLE "site_settings"
 ADD COLUMN IF NOT EXISTS "header_title_subtitle_gap_px" integer;
 
 ALTER TABLE "site_settings"
@@ -110,6 +116,8 @@ INSERT INTO "site_settings" (
   "header_title_size_px",
   "header_text_padding_top_px",
   "header_text_padding_bottom_px",
+  "header_text_padding_left_px",
+  "header_text_padding_right_px",
   "header_title_subtitle_gap_px",
   "hero_title",
   "hero_lede",
@@ -153,6 +161,8 @@ INSERT INTO "site_settings" (
   'Graduate School Tools',
   'Internal directory',
   28,
+  0,
+  0,
   0,
   0,
   4,
@@ -201,6 +211,14 @@ WHERE "header_text_padding_top_px" IS NULL;
 UPDATE "site_settings"
 SET "header_text_padding_bottom_px" = 0
 WHERE "header_text_padding_bottom_px" IS NULL;
+
+UPDATE "site_settings"
+SET "header_text_padding_left_px" = 0
+WHERE "header_text_padding_left_px" IS NULL;
+
+UPDATE "site_settings"
+SET "header_text_padding_right_px" = 0
+WHERE "header_text_padding_right_px" IS NULL;
 
 UPDATE "site_settings"
 SET "header_title_subtitle_gap_px" = 4
@@ -289,6 +307,18 @@ ALTER COLUMN "header_text_padding_bottom_px" SET DEFAULT 0;
 
 ALTER TABLE "site_settings"
 ALTER COLUMN "header_text_padding_bottom_px" SET NOT NULL;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "header_text_padding_left_px" SET DEFAULT 0;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "header_text_padding_left_px" SET NOT NULL;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "header_text_padding_right_px" SET DEFAULT 0;
+
+ALTER TABLE "site_settings"
+ALTER COLUMN "header_text_padding_right_px" SET NOT NULL;
 
 ALTER TABLE "site_settings"
 ALTER COLUMN "header_title_subtitle_gap_px" SET DEFAULT 4;

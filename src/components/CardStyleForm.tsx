@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateSiteSettingsAction } from "@/app/actions/settings";
 import type { SiteSettingsRow } from "@/lib/schema";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/site-defaults";
+import { resolveCardFontFamily } from "@/lib/site-theme-css";
 
 type CardStyleSettings = Pick<
   SiteSettingsRow,
@@ -114,6 +115,7 @@ function ChoiceTile({
   selectedValue,
   label,
   description,
+  previewFontFamily,
   onChange,
 }: {
   name: string;
@@ -121,6 +123,7 @@ function ChoiceTile({
   selectedValue: string;
   label: string;
   description: string;
+  previewFontFamily?: string;
   onChange: (value: string) => void;
 }) {
   const active = selectedValue === value;
@@ -132,6 +135,7 @@ function ChoiceTile({
           ? "border-[var(--wsu-crimson)] bg-[var(--wsu-crimson)]/6 shadow-[0_8px_20px_rgba(152,30,50,0.08)]"
           : "border-[var(--wsu-gray-light)] bg-white hover:border-[var(--wsu-gray-mid)]/35 hover:bg-[var(--wsu-bg)]/70"
       }`}
+      style={previewFontFamily ? { fontFamily: previewFontFamily } : undefined}
     >
       <input
         type="radio"
@@ -292,6 +296,7 @@ export function CardStyleForm({ settings, onCardSettingsChange }: Props) {
                   selectedValue={formValues.cardFontFamily}
                   label={choice.label}
                   description={choice.description}
+                  previewFontFamily={resolveCardFontFamily(choice.value)}
                   onChange={(value) => handleFieldChange("cardFontFamily", value)}
                 />
               ))}

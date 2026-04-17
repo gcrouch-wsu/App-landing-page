@@ -96,6 +96,8 @@ const settingsSchema = z.object({
   headerTitleSizePx: numberOrBlank(18, 48),
   headerTextPaddingTopPx: numberOrBlank(0, 48),
   headerTextPaddingBottomPx: numberOrBlank(0, 48),
+  headerTextPaddingLeftPx: numberOrBlank(0, 64),
+  headerTextPaddingRightPx: numberOrBlank(0, 64),
   headerTitleSubtitleGapPx: numberOrBlank(0, 32),
   heroTitle: textOrBlank(120),
   heroLede: textOrBlank(2000),
@@ -169,6 +171,10 @@ function buildNormalizedSettings(v: z.infer<typeof settingsSchema>) {
       v.headerTextPaddingTopPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingTopPx,
     headerTextPaddingBottomPx:
       v.headerTextPaddingBottomPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingBottomPx,
+    headerTextPaddingLeftPx:
+      v.headerTextPaddingLeftPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingLeftPx,
+    headerTextPaddingRightPx:
+      v.headerTextPaddingRightPx ?? DEFAULT_SITE_SETTINGS.headerTextPaddingRightPx,
     headerTitleSubtitleGapPx:
       v.headerTitleSubtitleGapPx ?? DEFAULT_SITE_SETTINGS.headerTitleSubtitleGapPx,
     heroTitle: cleanTextOrEmpty(v.heroTitle),
@@ -256,6 +262,8 @@ async function saveSettings(settings: NormalizedSettings, caps: Capabilities) {
   if (caps.supportsHeaderSpacing) {
     add("header_text_padding_top_px", settings.headerTextPaddingTopPx);
     add("header_text_padding_bottom_px", settings.headerTextPaddingBottomPx);
+    add("header_text_padding_left_px", settings.headerTextPaddingLeftPx);
+    add("header_text_padding_right_px", settings.headerTextPaddingRightPx);
     add("header_title_subtitle_gap_px", settings.headerTitleSubtitleGapPx);
   }
 
@@ -349,6 +357,16 @@ export async function updateSiteSettingsAction(formData: FormData) {
       formData,
       "headerTextPaddingBottomPx",
       currentSettings.headerTextPaddingBottomPx,
+    ),
+    headerTextPaddingLeftPx: readMergedValue(
+      formData,
+      "headerTextPaddingLeftPx",
+      currentSettings.headerTextPaddingLeftPx,
+    ),
+    headerTextPaddingRightPx: readMergedValue(
+      formData,
+      "headerTextPaddingRightPx",
+      currentSettings.headerTextPaddingRightPx,
     ),
     headerTitleSubtitleGapPx: readMergedValue(
       formData,
@@ -483,6 +501,8 @@ export async function updateSiteSettingsAction(formData: FormData) {
       supportsHeaderSpacing:
         existingColumns.has("header_text_padding_top_px") &&
         existingColumns.has("header_text_padding_bottom_px") &&
+        existingColumns.has("header_text_padding_left_px") &&
+        existingColumns.has("header_text_padding_right_px") &&
         existingColumns.has("header_title_subtitle_gap_px"),
       supportsAdvancedCardStyling:
         existingColumns.has("color_card_border") &&
@@ -522,6 +542,8 @@ export async function updateSiteSettingsAction(formData: FormData) {
       (
         normalized.headerTextPaddingTopPx !== DEFAULT_SITE_SETTINGS.headerTextPaddingTopPx ||
         normalized.headerTextPaddingBottomPx !== DEFAULT_SITE_SETTINGS.headerTextPaddingBottomPx ||
+        normalized.headerTextPaddingLeftPx !== DEFAULT_SITE_SETTINGS.headerTextPaddingLeftPx ||
+        normalized.headerTextPaddingRightPx !== DEFAULT_SITE_SETTINGS.headerTextPaddingRightPx ||
         normalized.headerTitleSubtitleGapPx !== DEFAULT_SITE_SETTINGS.headerTitleSubtitleGapPx
       )
     ) {
