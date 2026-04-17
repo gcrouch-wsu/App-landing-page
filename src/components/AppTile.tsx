@@ -29,24 +29,21 @@ export function AppTile({ app, href, className = "" }: TileProps) {
           >
             {app.title}
           </h2>
-          <p
-            className="mt-2 overflow-hidden break-all font-semibold leading-5 text-[var(--wsu-url-on-card)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-            style={{ fontSize: "var(--wsu-card-url-size,12px)" }}
-          >
-            {app.url}
-          </p>
         </div>
         {app.description ? (
           <p
-            className="mt-4 overflow-hidden leading-6 text-[var(--wsu-card-description)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4]"
+            className="mt-3 overflow-hidden leading-6 text-[var(--wsu-card-description)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4]"
             style={{ fontSize: "var(--wsu-card-description-size,14px)" }}
           >
             {app.description}
           </p>
         ) : null}
         {href ? (
-          <div className="mt-auto pt-5 text-sm font-semibold text-[var(--wsu-crimson)] transition group-hover:text-[var(--wsu-crimson-dark)]">
-            Open tool
+          <div
+            className="mt-auto pt-5 font-semibold text-[var(--wsu-url-on-card)] transition group-hover:text-[var(--wsu-crimson-dark)]"
+            style={{ fontSize: "var(--wsu-card-url-size,12px)" }}
+          >
+            {app.actionLabel?.trim() || "Open tool"}
           </div>
         ) : null}
       </div>

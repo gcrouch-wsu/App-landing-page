@@ -259,8 +259,8 @@ export function CardStyleForm({ settings, onCardSettingsChange }: Props) {
       <div className="max-w-2xl">
         <h3 className="text-lg font-bold text-[var(--wsu-gray)]">Card styling</h3>
         <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-          The cards in this tab use the actual `AppTile` rendering. Typography, spacing, and
-          colors update live while you edit.
+          The cards in this tab use the actual `AppTile` rendering. Typography, spacing, colors,
+          and the card action label update live while you edit.
         </p>
       </div>
 
@@ -284,7 +284,7 @@ export function CardStyleForm({ settings, onCardSettingsChange }: Props) {
                 Card font family
               </p>
               <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-                Changes the typography across the title, URL, description, and action label.
+                Changes the typography across the title, description, and action label.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -317,7 +317,7 @@ export function CardStyleForm({ settings, onCardSettingsChange }: Props) {
               />
             </label>
             <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]">
-              URL size (px)
+              Action label size (px)
               <input
                 name="cardUrlSizePx"
                 type="number"
@@ -441,7 +441,7 @@ export function CardStyleForm({ settings, onCardSettingsChange }: Props) {
             />
             <ColorPicker
               name="colorUrlOnCard"
-              label="URL color"
+              label="Action label color"
               value={formValues.colorUrlOnCard}
               fallback={DEFAULT_SITE_SETTINGS.colorUrlOnCard}
               onChange={(hex) => handleFieldChange("colorUrlOnCard", hex)}

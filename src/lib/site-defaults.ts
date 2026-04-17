@@ -23,7 +23,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsRow = {
   emptyStateText: "No applications yet. Use Manage apps to add the first card.",
   manageAddTitle: "Add application",
   manageAddBlurb:
-    "Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.",
+    "Add a title, action label, and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.",
   manageOrderTitle: "Card order and styling",
   manageOrderBlurb: "Drag by the handle. The order here matches the public landing page.",
   manageEmptyDragText: "No cards yet. Add one above.",

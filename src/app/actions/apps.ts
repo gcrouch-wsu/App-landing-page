@@ -19,8 +19,15 @@ const urlField = z
   .transform((s) => (/^https?:\/\//i.test(s) ? s : `https://${s}`))
   .pipe(z.string().url("Enter a valid URL"));
 
+const actionLabelField = z
+  .string()
+  .trim()
+  .max(80, "Keep the link label under 80 characters")
+  .transform((s) => (s === "" ? "Open tool" : s));
+
 const appInput = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
+  actionLabel: actionLabelField,
   url: urlField,
   description: z
     .string()
@@ -42,6 +49,7 @@ export async function createAppAction(formData: FormData) {
   await requireSession();
   const parsed = appInput.safeParse({
     title: formData.get("title"),
+    actionLabel: formData.get("actionLabel"),
     url: formData.get("url"),
     description: formData.get("description") ?? undefined,
   });
@@ -51,6 +59,7 @@ export async function createAppAction(formData: FormData) {
   const nextOrder = (await getMaxSortOrder()) + 1;
   await insertApp({
     title: parsed.data.title,
+    actionLabel: parsed.data.actionLabel,
     url: parsed.data.url,
     description: parsed.data.description ?? null,
     sortOrder: nextOrder,
@@ -80,6 +89,7 @@ export async function updateAppAction(formData: FormData) {
     .safeParse({
       id: formData.get("id"),
       title: formData.get("title"),
+      actionLabel: formData.get("actionLabel"),
       url: formData.get("url"),
       description: formData.get("description") ?? undefined,
     });
@@ -91,6 +101,7 @@ export async function updateAppAction(formData: FormData) {
   const app = await updateApp({
     id: parsed.data.id,
     title: parsed.data.title,
+    actionLabel: parsed.data.actionLabel,
     url: parsed.data.url,
     description: parsed.data.description ?? null,
   });

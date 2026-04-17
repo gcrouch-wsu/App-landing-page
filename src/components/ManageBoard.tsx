@@ -80,6 +80,7 @@ const cardStyleFallbackApps: AppCard[] = [
   {
     id: "sample-1",
     title: "Degree audit",
+    actionLabel: "Open audit",
     url: "https://example.wsu.edu/degree-audit",
     description: "Track milestones, approvals, and completion status in one place.",
     sortOrder: 0,
@@ -88,6 +89,7 @@ const cardStyleFallbackApps: AppCard[] = [
   {
     id: "sample-2",
     title: "Funding dashboard",
+    actionLabel: "View funding",
     url: "https://example.wsu.edu/funding",
     description: "Review assistantships, tuition coverage, and appointment details.",
     sortOrder: 1,
@@ -96,6 +98,7 @@ const cardStyleFallbackApps: AppCard[] = [
   {
     id: "sample-3",
     title: "Forms hub",
+    actionLabel: "Open forms",
     url: "https://example.wsu.edu/forms",
     description: "Open common graduate school forms and supporting instructions quickly.",
     sortOrder: 2,
@@ -226,6 +229,7 @@ export function ManageBoard({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState({
     title: "",
+    actionLabel: "Open tool",
     url: "",
     description: "",
   });
@@ -269,6 +273,7 @@ export function ManageBoard({
     setEditingId(app.id);
     setEditValues({
       title: app.title,
+      actionLabel: app.actionLabel,
       url: app.url,
       description: app.description ?? "",
     });
@@ -297,7 +302,11 @@ export function ManageBoard({
       if (!res.ok) {
         const fe = res.error;
         const first =
-          fe.title?.[0] ?? fe.url?.[0] ?? fe.description?.[0] ?? "Could not save";
+          fe.title?.[0] ??
+          fe.actionLabel?.[0] ??
+          fe.url?.[0] ??
+          fe.description?.[0] ??
+          "Could not save";
         setFieldErrors(fe);
         setFormError(typeof first === "string" ? first : "Could not save");
         return;
@@ -318,7 +327,7 @@ export function ManageBoard({
       setRemovingId(null);
       if (editingId === id) {
         setEditingId(null);
-        setEditValues({ title: "", url: "", description: "" });
+        setEditValues({ title: "", actionLabel: "Open tool", url: "", description: "" });
         setEditFieldErrors({});
         setEditBanner(null);
       }
@@ -338,6 +347,7 @@ export function ManageBoard({
       if (!res.ok) {
         const first =
           res.error.title?.[0] ??
+          res.error.actionLabel?.[0] ??
           res.error.url?.[0] ??
           res.error.description?.[0] ??
           res.error.id?.[0] ??
@@ -350,6 +360,7 @@ export function ManageBoard({
       setItems((prev) => prev.map((app) => (app.id === res.app.id ? res.app : app)));
       setEditValues({
         title: res.app.title,
+        actionLabel: res.app.actionLabel,
         url: res.app.url,
         description: res.app.description ?? "",
       });
@@ -361,7 +372,10 @@ export function ManageBoard({
   }
 
   const dataSignature = initialApps
-    .map((app) => `${app.id}|${app.sortOrder}|${app.title}|${app.url}|${app.description ?? ""}`)
+    .map(
+      (app) =>
+        `${app.id}|${app.sortOrder}|${app.title}|${app.actionLabel}|${app.url}|${app.description ?? ""}`,
+    )
     .join("~~");
 
   useEffect(() => {
@@ -377,7 +391,7 @@ export function ManageBoard({
     const current = items.find((app) => app.id === editingId);
     if (!current) {
       setEditingId(null);
-      setEditValues({ title: "", url: "", description: "" });
+      setEditValues({ title: "", actionLabel: "Open tool", url: "", description: "" });
       setEditFieldErrors({});
       setEditBanner(null);
     }
@@ -459,6 +473,24 @@ export function ManageBoard({
                 />
                 {fieldErrors.title?.length ? (
                   <p className="mt-1 text-xs text-red-600">{fieldErrors.title[0]}</p>
+                ) : null}
+              </div>
+              <div>
+                <label
+                  htmlFor="actionLabel"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+                >
+                  Action label
+                </label>
+                <input
+                  id="actionLabel"
+                  name="actionLabel"
+                  defaultValue="Open tool"
+                  className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                  placeholder="Open tool"
+                />
+                {fieldErrors.actionLabel?.length ? (
+                  <p className="mt-1 text-xs text-red-600">{fieldErrors.actionLabel[0]}</p>
                 ) : null}
               </div>
               <div>
@@ -554,8 +586,9 @@ export function ManageBoard({
                 <div className="max-w-2xl">
                   <h3 className="text-lg font-bold text-[var(--wsu-gray)]">Edit existing cards</h3>
                   <p className="mt-1 text-sm leading-6 text-[var(--wsu-gray-mid)]">
-                    Choose a card from the drag-and-drop list below to edit its title, URL, or
-                    description. Reordering is still handled separately in that same list.
+                    Choose a card from the drag-and-drop list below to edit its title, action
+                    label, URL, or description. Reordering is still handled separately in that same
+                    list.
                   </p>
                 </div>
                 {editingApp ? (
@@ -563,7 +596,12 @@ export function ManageBoard({
                     type="button"
                     onClick={() => {
                       setEditingId(null);
-                      setEditValues({ title: "", url: "", description: "" });
+                      setEditValues({
+                        title: "",
+                        actionLabel: "Open tool",
+                        url: "",
+                        description: "",
+                      });
                       setEditFieldErrors({});
                       setEditBanner(null);
                     }}
@@ -590,7 +628,7 @@ export function ManageBoard({
                     </p>
                   ) : null}
 
-                  <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-4 lg:grid-cols-3">
                     <div>
                       <label
                         htmlFor="edit-title"
@@ -609,6 +647,29 @@ export function ManageBoard({
                       />
                       {editFieldErrors.title?.length ? (
                         <p className="mt-1 text-xs text-red-600">{editFieldErrors.title[0]}</p>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="edit-action-label"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--wsu-gray-mid)]"
+                      >
+                        Action label
+                      </label>
+                      <input
+                        id="edit-action-label"
+                        name="actionLabel"
+                        value={editValues.actionLabel}
+                        onChange={(e) =>
+                          setEditValues((prev) => ({ ...prev, actionLabel: e.target.value }))
+                        }
+                        className="w-full rounded-lg border border-[var(--wsu-gray-light)] px-3 py-2 text-sm outline-none ring-[var(--wsu-crimson)] focus:ring-2"
+                      />
+                      {editFieldErrors.actionLabel?.length ? (
+                        <p className="mt-1 text-xs text-red-600">
+                          {editFieldErrors.actionLabel[0]}
+                        </p>
                       ) : null}
                     </div>
 

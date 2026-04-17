@@ -10,6 +10,7 @@ import {
 export const appCards = pgTable("app_card", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
+  actionLabel: text("action_label").notNull().default("Open tool"),
   url: text("url").notNull(),
   description: text("description"),
   sortOrder: integer("sort_order").notNull().default(0),

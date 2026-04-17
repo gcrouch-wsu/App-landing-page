@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "app_card" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "title" text NOT NULL,
+  "action_label" text DEFAULT 'Open tool' NOT NULL,
   "url" text NOT NULL,
   "description" text,
   "sort_order" integer DEFAULT 0 NOT NULL,
@@ -127,7 +128,7 @@ INSERT INTO "site_settings" (
   'This directory is public. Use Manage apps to sign in and update links, descriptions, ordering, and branding.',
   'No applications yet. Use Manage apps to add the first card.',
   'Add application',
-  'Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.',
+  'Add a title, action label, and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.',
   'Card order and styling',
   'Drag by the handle. The order here matches the public landing page.',
   'No cards yet. Add one above.',

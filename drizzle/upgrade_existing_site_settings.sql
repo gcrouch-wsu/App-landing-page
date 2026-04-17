@@ -1,3 +1,17 @@
+ALTER TABLE "app_card"
+ADD COLUMN IF NOT EXISTS "action_label" text;
+
+UPDATE "app_card"
+SET "action_label" = 'Open tool'
+WHERE "action_label" IS NULL
+   OR btrim("action_label") = '';
+
+ALTER TABLE "app_card"
+ALTER COLUMN "action_label" SET DEFAULT 'Open tool';
+
+ALTER TABLE "app_card"
+ALTER COLUMN "action_label" SET NOT NULL;
+
 ALTER TABLE "site_settings"
 ADD COLUMN IF NOT EXISTS "logo_url" text;
 
@@ -170,7 +184,7 @@ INSERT INTO "site_settings" (
   'This directory is public. Use Manage apps to sign in and update links, descriptions, ordering, and branding.',
   'No applications yet. Use Manage apps to add the first card.',
   'Add application',
-  'Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.',
+  'Add a title, action label, and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.',
   'Card order and styling',
   'Drag by the handle. The order here matches the public landing page.',
   'No cards yet. Add one above.',
@@ -279,7 +293,7 @@ ALTER TABLE "site_settings"
 ALTER COLUMN "empty_state_text" SET DEFAULT 'No applications yet. Use Manage apps to add the first card.';
 
 ALTER TABLE "site_settings"
-ALTER COLUMN "manage_add_blurb" SET DEFAULT 'Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.';
+ALTER COLUMN "manage_add_blurb" SET DEFAULT 'Add a title, action label, and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.';
 
 ALTER TABLE "site_settings"
 ALTER COLUMN "manage_order_blurb" SET DEFAULT 'Drag by the handle. The order here matches the public landing page.';
@@ -407,8 +421,11 @@ SET "empty_state_text" = 'No applications yet. Use Manage apps to add the first 
 WHERE "empty_state_text" = 'No applications yet. Sign in with Admin login to add cards.';
 
 UPDATE "site_settings"
-SET "manage_add_blurb" = 'Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.'
-WHERE "manage_add_blurb" = 'Titles and URLs appear on the public page. Descriptions are optional. Drag cards in the frame below to set order; changes save automatically.';
+SET "manage_add_blurb" = 'Add a title, action label, and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.'
+WHERE "manage_add_blurb" IN (
+  'Titles and URLs appear on the public page. Descriptions are optional. Drag cards in the frame below to set order; changes save automatically.',
+  'Add a title and URL for each application. Descriptions and branding are optional. Reorder cards below and changes save automatically.'
+);
 
 UPDATE "site_settings"
 SET "manage_order_blurb" = 'Drag by the handle. The order here matches the public landing page.'
